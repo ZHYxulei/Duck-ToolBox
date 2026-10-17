@@ -1,4 +1,5 @@
 """Exercise the actual Java bridge against a host AIDL fixture (no HAL or network)."""
+import os
 import pathlib
 import struct
 import subprocess
@@ -26,7 +27,10 @@ public class ServiceManager {
 } """,
     "android/hardware/security/keymint/RpcHardwareInfo.java": """
 package android.hardware.security.keymint;
-public class RpcHardwareInfo { public int supportedEekCurve = Integer.getInteger("test.curve", 2); }
+public class RpcHardwareInfo {
+    public int versionNumber = Integer.getInteger("test.version", 2);
+    public int supportedEekCurve = Integer.getInteger("test.curve", 2);
+}
 """,
     "android/hardware/security/keymint/MacedPublicKey.java": """
 package android.hardware.security.keymint;
@@ -52,7 +56,11 @@ public interface IRemotelyProvisionedComponent {
             return new Proxy();
         }
     private static class Proxy implements IRemotelyProvisionedComponent {
-    public RpcHardwareInfo getHardwareInfo() { return new RpcHardwareInfo(); }
+    public RpcHardwareInfo getHardwareInfo() {
+        if (Boolean.getBoolean("test.hardwareFailure"))
+            throw new IllegalStateException("hardware info unavailable");
+        return new RpcHardwareInfo();
+    }
     public byte[] generateCertificateRequest(boolean testMode, MacedPublicKey[] keys,
             byte[] eek, byte[] challenge, DeviceInfo di, ProtectedData pd) {
         int error = Integer.getInteger("test.error", 0);
@@ -99,22 +107,24 @@ class BridgeContract(unittest.TestCase):
     def tearDownClass(cls):
         cls.temporary.cleanup()
 
-    def run_bridge(self, properties=(), request=None):
+    def run_bridge(self, properties=(), request=None, classpath=None):
         with tempfile.TemporaryDirectory(dir=self.root) as directory:
             exchange = pathlib.Path(directory)
             if request is None:
                 request = b"".join(frame(value) for value in [b"\x07", b"\x2a", b"\x01", b"\x02"])
             (exchange / "request.bin").write_bytes(request)
-            subprocess.run(["java", *properties, "-cp", str(self.classes),
+            subprocess.run(["java", *properties, "-cp", str(classpath or self.classes),
                             "duck.rkp.RkpV1Bridge", directory], check=True, timeout=10)
             return (exchange / "reply.bin").read_bytes()
 
     def test_matching_proxy_receives_production_request_and_hardware_curve(self):
-        for curve in [1, 2]:
-            with self.subTest(curve=curve):
-                response = self.run_bridge([f"-Dtest.curve={curve}"])
-                self.assertEqual(response, struct.pack(">i", 0) + frame(bytes(32))
-                                 + frame(bytes([11, 12])) + frame(bytes([21, 22, 23])))
+        for version in [1, 2, 0, -1, 3, 4]:
+            for curve in [1, 2]:
+                with self.subTest(version=version, curve=curve):
+                    response = self.run_bridge([
+                        f"-Dtest.version={version}", f"-Dtest.curve={curve}"])
+                    self.assertEqual(response, struct.pack(">i", 0) + frame(bytes(32))
+                                     + frame(bytes([11, 12])) + frame(bytes([21, 22, 23])))
 
     def test_aidl_exception_preserves_service_error_code(self):
         for error in [2, 6, -40]:
@@ -123,11 +133,56 @@ class BridgeContract(unittest.TestCase):
                 self.assertEqual(struct.unpack(">ii", response[:8]), (1, error))
                 self.assertIn(b"HAL rejected request", response)
 
-    def test_unavailable_service_and_unsupported_curve_are_transport_errors(self):
-        for property in ["-Dtest.missing=true", "-Dtest.curve=0"]:
+    def test_unavailable_service_and_hardware_failure_are_transport_errors(self):
+        for property in ["-Dtest.missing=true", "-Dtest.hardwareFailure=true"]:
             with self.subTest(property=property):
                 response = self.run_bridge([property])
                 self.assertEqual(struct.unpack(">i", response[:4])[0], 2)
+
+    def test_modern_hardware_without_eek_does_not_call_legacy_issuance(self):
+        request = b"".join(frame(value) for value in [b"\x07", b"\x2a", b"", b""])
+        for version in [3, 4]:
+            with self.subTest(version=version):
+                response = self.run_bridge([
+                    f"-Dtest.version={version}", "-Dtest.curve=0", "-Dtest.error=99"], request)
+                self.assertEqual(struct.unpack(">i", response[:4])[0], 4)
+                self.assertIn(f"versionNumber={version}, supportedEekCurve=0".encode(), response)
+                self.assertIn(b"do not use EEK", response)
+
+    def test_invalid_legacy_curve_is_an_invalid_hardware_response(self):
+        for version in [1, 2]:
+            for curve in [0, -1, 99]:
+                with self.subTest(version=version, curve=curve):
+                    response = self.run_bridge([
+                        f"-Dtest.version={version}", f"-Dtest.curve={curve}", "-Dtest.error=99"])
+                    self.assertEqual(struct.unpack(">i", response[:4])[0], 3)
+                    self.assertIn(f"versionNumber={version}".encode(), response)
+
+    def test_unknown_hardware_without_a_supported_curve_is_not_a_transport_error(self):
+        for version in [0, -1, 3, 4]:
+            with self.subTest(version=version):
+                response = self.run_bridge([
+                    f"-Dtest.version={version}", "-Dtest.curve=99", "-Dtest.error=99"])
+                self.assertEqual(struct.unpack(">i", response[:4])[0], 4)
+                self.assertIn(b"supportedEekCurve=99", response)
+
+    def test_proxy_without_version_field_retains_legacy_curve_selection(self):
+        with tempfile.TemporaryDirectory(dir=self.root) as directory:
+            root = pathlib.Path(directory)
+            source = root / "RpcHardwareInfo.java"
+            source.write_text(
+                "package android.hardware.security.keymint; public class RpcHardwareInfo {"
+                'public int supportedEekCurve = Integer.getInteger("test.curve", 2); }',
+                encoding="utf-8")
+            subprocess.run(["javac", "--release", "8", "-d", str(root), str(source)], check=True)
+            classpath = str(root) + os.pathsep + str(self.classes)
+            for curve in [1, 2]:
+                with self.subTest(curve=curve):
+                    response = self.run_bridge([f"-Dtest.curve={curve}"], classpath=classpath)
+                    self.assertEqual(struct.unpack(">i", response[:4])[0], 0)
+            response = self.run_bridge(["-Dtest.curve=0", "-Dtest.error=99"], classpath=classpath)
+            self.assertEqual(struct.unpack(">i", response[:4])[0], 4)
+            self.assertIn(b"versionNumber=null, supportedEekCurve=0", response)
 
     def test_invalid_hal_results_have_the_invalid_response_status(self):
         for property in ["shortMac", "nullMac", "nullDevice", "emptyDevice", "largeProtected"]:

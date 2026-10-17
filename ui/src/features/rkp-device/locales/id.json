@@ -85,6 +85,7 @@
   "errors": {
     "acknowledgement_required": "Batasan belum disetujui.",
     "unsupported_device": "Perangkat ini tidak memenuhi prasyarat.",
+    "unsupported_protocol": "Protokol RKP yang dipilih tidak didukung oleh implementasi ini.",
     "ta_timeout": "Aplikasi tepercaya KeyMint tidak menjawab tepat waktu.",
     "ta_transport_error": "Komunikasi dengan aplikasi tepercaya KeyMint gagal; ABI firmware mungkin tidak kompatibel.",
     "ta_rejected": "Aplikasi tepercaya KeyMint menolak permintaan.",

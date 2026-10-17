@@ -20,7 +20,7 @@ public final class RkpV1Bridge {
         if (args.length != 1) throw new IllegalArgumentException("expected exchange directory");
         File directory = new File(args[0]);
         // Status 0: MAC, DeviceInfo, ProtectedData. Status 1: AIDL error code and message.
-        // Status 2: transport error. Status 3: invalid HAL response.
+        // Status 2: transport error. Status 3: invalid HAL response. Status 4: unsupported protocol.
         // Every byte string has a big-endian int length.
         byte[] response;
         try {
@@ -63,10 +63,23 @@ public final class RkpV1Bridge {
                 .getMethod("asInterface", binder).invoke(null, service);
         Object info = api.getMethod("getHardwareInfo").invoke(proxy);
         int curve = info.getClass().getField("supportedEekCurve").getInt(info);
+        Integer version = null;
+        try {
+            version = info.getClass().getField("versionNumber").getInt(info);
+        } catch (NoSuchFieldException ignored) {
+        }
+        String hardware = "versionNumber=" + version + ", supportedEekCurve=" + curve;
         byte[] eek;
         if (curve == 1) eek = p256;
         else if (curve == 2) eek = x25519;
-        else throw new IOException("unsupported EEK curve: " + curve);
+        else if (curve == 0 && version != null && version >= 3) {
+            return errorReply(4, 0, "V1 requires EEK support; RKP hardware version 3 and later "
+                    + "do not use EEK (" + hardware + ")");
+        } else if (version != null && version >= 1 && version <= 2) {
+            return errorReply(3, 0, "invalid EEK curve for legacy RKP hardware (" + hardware + ")");
+        } else {
+            return errorReply(4, 0, "V1 requires a supported EEK curve (" + hardware + ")");
+        }
         if (eek.length == 0) throw new IOException("server supplied no EEK chain for curve " + curve);
 
         Class<?> keyClass = Class.forName(PREFIX + "MacedPublicKey");

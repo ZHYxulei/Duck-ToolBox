@@ -199,7 +199,11 @@ fn bridge_framing_is_bounded_exact_and_preserves_aidl_errors() {
 
 #[test]
 fn bridge_keeps_transport_and_invalid_response_errors_distinct() {
-    for (status, expected_code) in [(2u32, "ta_transport_error"), (3, "invalid_ta_response")] {
+    for (status, expected_code) in [
+        (2u32, "ta_transport_error"),
+        (3, "invalid_ta_response"),
+        (4, "unsupported_protocol"),
+    ] {
         let mut reply = status.to_be_bytes().to_vec();
         append(&mut reply, b"invalid DeviceInfo length");
         let error = wire::decode_response(&reply).unwrap_err();
@@ -208,6 +212,28 @@ fn bridge_keeps_transport_and_invalid_response_errors_distinct() {
         reply.push(0);
         assert!(wire::decode_response(&reply).is_err());
     }
+}
+
+#[test]
+fn unsupported_protocol_reply_is_bounded_and_exact() {
+    let mut reply = 4u32.to_be_bytes().to_vec();
+    append(&mut reply, b"versionNumber=3, supportedEekCurve=0");
+    for cut in 0..reply.len() {
+        assert!(wire::decode_response(&reply[..cut]).is_err());
+    }
+    let error = wire::decode_response(&reply).unwrap_err();
+    assert_eq!(crate::error::code_of(&error), "unsupported_protocol");
+    assert!(error.to_string().contains("versionNumber=3"));
+    reply.push(0);
+    assert!(wire::decode_response(&reply).is_err());
+
+    let mut invalid_utf8 = 4u32.to_be_bytes().to_vec();
+    append(&mut invalid_utf8, &[0xff]);
+    assert!(wire::decode_response(&invalid_utf8).is_err());
+    let mut oversized = 4u32.to_be_bytes().to_vec();
+    oversized.extend_from_slice(&((BUFFER_SIZE + 1) as u32).to_be_bytes());
+    assert!(wire::decode_response(&oversized).is_err());
+    assert!(wire::decode_response(&5u32.to_be_bytes()).is_err());
 }
 
 #[test]

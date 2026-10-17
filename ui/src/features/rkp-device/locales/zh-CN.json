@@ -85,6 +85,7 @@
   "errors": {
     "acknowledgement_required": "尚未确认使用限制。",
     "unsupported_device": "本机不满足前置条件。",
+    "unsupported_protocol": "所选 RKP 协议不适用于此实现。",
     "ta_timeout": "KeyMint 可信应用未及时响应。",
     "ta_transport_error": "与 KeyMint 可信应用通信失败，固件 ABI 可能不兼容。",
     "ta_rejected": "KeyMint 可信应用拒绝了该请求。",

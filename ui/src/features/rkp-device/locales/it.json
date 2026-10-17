@@ -85,6 +85,7 @@
   "errors": {
     "acknowledgement_required": "Le limitazioni non sono state accettate.",
     "unsupported_device": "Questo dispositivo non soddisfa i prerequisiti.",
+    "unsupported_protocol": "Il protocollo RKP selezionato non è supportato da questa implementazione.",
     "ta_timeout": "L'app attendibile KeyMint non ha risposto in tempo.",
     "ta_transport_error": "La comunicazione con l'app attendibile KeyMint è fallita; l'ABI del firmware potrebbe essere incompatibile.",
     "ta_rejected": "L'app attendibile KeyMint ha rifiutato la richiesta.",

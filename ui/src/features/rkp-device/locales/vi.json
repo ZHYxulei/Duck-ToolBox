@@ -85,6 +85,7 @@
   "errors": {
     "acknowledgement_required": "Chưa xác nhận các giới hạn.",
     "unsupported_device": "Thiết bị này không đủ điều kiện.",
+    "unsupported_protocol": "Giao thức RKP đã chọn không được hỗ trợ trong bản triển khai này.",
     "ta_timeout": "Ứng dụng tin cậy KeyMint không phản hồi kịp.",
     "ta_transport_error": "Giao tiếp với ứng dụng tin cậy KeyMint thất bại; ABI firmware có thể không tương thích.",
     "ta_rejected": "Ứng dụng tin cậy KeyMint đã từ chối yêu cầu.",

@@ -85,6 +85,7 @@
   "errors": {
     "acknowledgement_required": "لم يتم الإقرار بالقيود.",
     "unsupported_device": "هذا الجهاز لا يستوفي المتطلبات.",
+    "unsupported_protocol": "بروتوكول RKP المحدد غير مدعوم في هذا التنفيذ.",
     "ta_timeout": "لم يستجب تطبيق KeyMint الموثوق في الوقت المحدد.",
     "ta_transport_error": "فشل الاتصال بتطبيق KeyMint الموثوق؛ قد تكون واجهة ABI للبرنامج الثابت غير متوافقة.",
     "ta_rejected": "رفض تطبيق KeyMint الموثوق الطلب.",

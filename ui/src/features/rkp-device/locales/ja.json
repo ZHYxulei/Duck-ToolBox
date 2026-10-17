@@ -85,6 +85,7 @@
   "errors": {
     "acknowledgement_required": "制限事項が確認されていません。",
     "unsupported_device": "このデバイスは前提条件を満たしていません。",
+    "unsupported_protocol": "選択した RKP プロトコルは、この実装ではサポートされていません。",
     "ta_timeout": "KeyMint トラステッドアプリが時間内に応答しませんでした。",
     "ta_transport_error": "KeyMint トラステッドアプリとの通信に失敗しました。ファームウェア ABI が非互換の可能性があります。",
     "ta_rejected": "KeyMint トラステッドアプリがリクエストを拒否しました。",

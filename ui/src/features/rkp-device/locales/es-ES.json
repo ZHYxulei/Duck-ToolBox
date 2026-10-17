@@ -85,6 +85,7 @@
   "errors": {
     "acknowledgement_required": "No se aceptaron las limitaciones.",
     "unsupported_device": "Este dispositivo no cumple los requisitos.",
+    "unsupported_protocol": "Esta implementación no admite el protocolo RKP seleccionado.",
     "ta_timeout": "La app de confianza KeyMint no respondió a tiempo.",
     "ta_transport_error": "Falló la comunicación con la app de confianza KeyMint; la ABI del firmware puede ser incompatible.",
     "ta_rejected": "La app de confianza KeyMint rechazó la petición.",

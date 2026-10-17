@@ -15,6 +15,7 @@ enum ResultKind {
     Reject,
     Timeout,
     Transport,
+    UnsupportedProtocol,
     Malformed,
     WrongKey,
 }
@@ -54,6 +55,9 @@ impl Methods {
             ResultKind::Timeout => Err(DeviceRkpError::Timeout.into()),
             ResultKind::Transport => {
                 Err(DeviceRkpError::Transport("adapter unavailable".into()).into())
+            }
+            ResultKind::UnsupportedProtocol => {
+                Err(DeviceRkpError::UnsupportedProtocol("V1 requires EEK support".into()).into())
             }
             _ => Ok(()),
         }
@@ -254,6 +258,76 @@ async fn native_v1_is_attempted_after_both_previous_methods_fail() {
         [vec![1; 32], vec![2; 32], vec![3; 32]]
     );
     assert_eq!(fs::read_dir(&ctx.paths.outputs_dir).unwrap().count(), 1);
+}
+
+#[tokio::test]
+async fn unsupported_aidl_protocol_does_not_disable_native_fallback() {
+    let (_dir, ctx) = working_dir("rkp-unsupported-aidl");
+    let methods = Methods::new(
+        &ctx,
+        [
+            ResultKind::Reject,
+            ResultKind::UnsupportedProtocol,
+            ResultKind::Good,
+        ],
+    );
+    let server = FreshServer::new(vec![]);
+    let data = provision(
+        &ctx,
+        true,
+        Options::default(),
+        &FixedKeys,
+        &methods,
+        &server,
+        &FakeEnvironment,
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        *methods.calls.borrow(),
+        [Method::V2, Method::V1, Method::V1Native]
+    );
+    assert_eq!(
+        data.attempts[1].error.as_ref().unwrap().code,
+        "unsupported_protocol"
+    );
+    assert_eq!(data.csr_backend, Backend::Native);
+    assert_eq!(
+        *server.challenges.lock().unwrap(),
+        [vec![1; 32], vec![2; 32], vec![3; 32]]
+    );
+}
+
+#[tokio::test]
+async fn explicit_unsupported_v1_does_not_try_another_method_or_submit_a_csr() {
+    let (_dir, ctx) = working_dir("rkp-explicit-unsupported-aidl");
+    let methods = Methods::new(
+        &ctx,
+        [
+            ResultKind::Good,
+            ResultKind::UnsupportedProtocol,
+            ResultKind::Good,
+        ],
+    );
+    let server = FreshServer::new(vec![]);
+    let error = provision(
+        &ctx,
+        true,
+        Options {
+            protocol: Protocol::V1,
+            ..Options::default()
+        },
+        &FixedKeys,
+        &methods,
+        &server,
+        &FakeEnvironment,
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(crate::error::code_of(&error), "unsupported_protocol");
+    assert_eq!(*methods.calls.borrow(), [Method::V1]);
+    assert!(server.inner.submitted.lock().unwrap().is_empty());
+    assert_eq!(fs::read_dir(&ctx.paths.outputs_dir).unwrap().count(), 0);
 }
 
 #[tokio::test]
