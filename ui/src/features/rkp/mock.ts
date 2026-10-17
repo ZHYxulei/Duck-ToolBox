@@ -51,8 +51,28 @@ function requireKey() {
   }
 }
 
+const material = {
+  material_type: "imported-dice",
+  algorithm: "ed25519",
+  dice_entries: 2,
+  chain_signatures_valid: true,
+  key_matches: true,
+  source_trust: "unverified",
+}
+
+function imported(flags: Record<string, string | true>) {
+  if (!flags.bundle && !(flags.chain && flags.signing)) {
+    throw new MockFailure("invalid_material_input", "material files are required")
+  }
+  const source = String(flags.bundle ?? flags.chain)
+  if (source.includes("mismatch") || source.includes("invalid")) {
+    throw new MockFailure("invalid_material_input", "DICE chain or signing key did not validate")
+  }
+  return material
+}
+
 const mock: MockModule = {
-  feature: { id: "rkp", contract: 1 },
+  feature: { id: "rkp", contract: 2 },
   handlers: {
     "rkp.profile.show": () => ({ profile, paths }),
     "rkp.profile.save": (_args, _flags, input) => {
@@ -87,7 +107,6 @@ const mock: MockModule = {
       return {
         mode: profile.key_source.kind === "seed" ? "direct-seed" : "hw-kdf",
         curve: profile.curve,
-        seed_hex: "11".repeat(32),
         public_key_hex: report.uds_pub_hex,
         output_path: paths.outputs_dir,
       }
@@ -121,13 +140,35 @@ const mock: MockModule = {
       return {
         csr_path: `${paths.outputs_dir}/keybox_20260928.cbor`,
         keybox_path: `${paths.outputs_dir}/keybox_20260928.xml`,
-        keybox_xml:
-          '<?xml version="1.0"?>\n<AndroidAttestation>\n  <NumberOfKeyboxes>1</NumberOfKeyboxes>\n</AndroidAttestation>\n',
         device_id: "duck-caiman",
         chain_summary: { certificates: 3, subjects: ["CN=Droid CA3"] },
       }
     },
     "rkp.verify": (args) => ({ path: args[0], report }),
+    "rkp.import.validate": (_args, flags) => ({
+      stage: "validated",
+      material: imported(flags),
+      ready_for_issuance: !String(flags.bundle ?? flags.chain).includes("incomplete"),
+    }),
+    "rkp.import.diagnose": (_args, flags) => ({
+      stage: "diagnostic",
+      material: imported(flags),
+      csr_path: `${paths.outputs_dir}/rkp-diagnostic/csr.cbor`,
+      local_verify: report,
+      diagnostic_only: true,
+    }),
+    "rkp.import.issue": (_args, flags) => ({
+      stage: "exported",
+      material: imported(flags),
+      csr_path: `${paths.outputs_dir}/rkp-import/csr.cbor`,
+      keybox_path: `${paths.outputs_dir}/rkp-import/keybox.xml`,
+      device_id: "duck-imported",
+      chain_summary: { certificates: 3, subjects: ["CN=Droid CA3"] },
+      local_verify: report,
+      server_accepted: true,
+      certificates_verified: true,
+      keybox_exported: true,
+    }),
   },
 }
 

@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "RKP ワークベンチ",
-    "description": "リモート鍵プロビジョニングのリクエスト作成、証明書の取得、keybox.xml のエクスポート、CSR の検証を行います。"
+    "description": "既存の DICE チェーンと対応する署名素材を読み込みます。事前の CSR は不要です。"
   },
   "tabs": {
     "profile": "プロファイル",
     "provision": "リクエスト",
     "keybox": "Keybox",
-    "verify": "検証"
+    "verify": "CSR 診断",
+    "import": "DICE インポート"
   },
   "profile": {
     "keySource": "鍵マテリアル",
@@ -82,7 +83,7 @@
     "invalid": "無効",
     "protectedData": "保護データ",
     "bytes": "{count} バイト",
-    "localTestMode": "サーバーに接続できなかったため、ローカルのテスト用 EEK で CSR を作成しました。",
+    "localTestMode": "オフライン診断モードです。証明書申請は送信していません。",
     "fetchEekError": "EEK の取得に失敗しました",
     "submitError": "サーバーへの送信に失敗しました",
     "chains": "証明書チェーン",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "RKP サーバーからの応答が無効です。",
     "device_not_registered": "このデバイスは RKP サーバーに認識されていません。",
     "rkp_client_error": "RKP サーバーがリクエストを拒否しました。",
-    "rkp_server_error": "RKP サーバーでエラーが発生しました。"
+    "rkp_server_error": "RKP サーバーでエラーが発生しました。",
+    "invalid_material_input": "素材ファイルのパスを入力してください。",
+    "material_structure": "インポート素材の構造が無効です。",
+    "material_chain_invalid": "DICE チェーンまたは UDS 証拠が無効です。",
+    "material_unsupported": "この署名素材または鍵導出方式は未対応です。",
+    "material_key_mismatch": "署名鍵が DICE リーフと一致しません。",
+    "material_ambiguous_match": "複数の鍵導出方式が一致しました。方式を明示してください。",
+    "material_configuration": "申請設定が無効か、バンドルと矛盾しています。",
+    "challenge_unavailable": "チャレンジを取得できませんでした。証明書申請は送信していません。",
+    "submission_unknown": "送信結果が不明です。自動で再試行しないでください。",
+    "invalid_endpoint": "サーバーのアドレスが無効です。HTTPS を使用してください。",
+    "certificate_validation_failed": "サーバーは応答しましたが、証明書の検証に失敗しました。Keybox は出力していません。"
+  },
+  "import": {
+    "title": "DICE 素材をインポート",
+    "workflow": "インポート → 検証 → 設定 → オンライン申請 → エクスポート",
+    "description": "既存の DICE チェーンと対応する署名素材を読み込みます。事前の CSR は不要です。",
+    "bundle": "DICE 素材バンドル（JSON）",
+    "split": "チェーンと署名素材を個別に指定",
+    "bundlePath": "バンドルファイルのパス",
+    "chainPath": "DICE チェーンファイル（生 CBOR）",
+    "signingPath": "署名素材ファイル（JSON）",
+    "configPath": "申請設定ファイル（JSON、省略可）",
+    "configHint": "設定ファイルに DeviceInfo、ビルド指紋、サーバーを指定します。既存素材のインポートには root を使った端末からの取得や Qualcomm ハードウェアは不要です。",
+    "fileHint": "バックエンドに渡すのはファイルのパスのみです。ブラウザーは素材の内容を読み取ったり永続保存したりしません。",
+    "validate": "素材を検証",
+    "diagnose": "診断用 CSR を生成（オフライン）",
+    "issue": "オンライン申請して Keybox を出力",
+    "busy": "処理中です。完了するまでファイルを変更しないでください。",
+    "materialType": "素材の種類",
+    "algorithm": "署名アルゴリズム",
+    "entries": "DICE エントリ数",
+    "chain": "チェーンの署名",
+    "key": "署名鍵の一致",
+    "trust": "出所の信頼性",
+    "unverified": "未検証",
+    "trustHint": "ローカルのチェーンと鍵の検証は、ハードウェア由来、端末登録、サーバーによる受理を証明しません。",
+    "ready": "検証に成功しました。オンライン申請が可能です。",
+    "configRequired": "素材の検証に成功しました。申請設定を補完して再検証してください。",
+    "diagnostic": "診断専用：オフラインで生成しました。証明書申請は送信していません。",
+    "exported": "サーバーが申請を受理し、証明書を検証して Keybox を出力しました。",
+    "result": "結果ファイル",
+    "server": "サーバーによる受理",
+    "certificates": "証明書の検証"
+  },
+  "experimental": {
+    "title": "実験モード",
+    "description": "従来の Seed/KDF フローはソフトウェア DICE ID を生成します。端末のチェーンのインポートやサーバー登録の証明は行いません。既存の素材にはインポートを使用してください。"
   }
 }

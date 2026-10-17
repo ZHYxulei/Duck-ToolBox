@@ -11,7 +11,7 @@ import { rkpApi } from "./api"
 let host: Host | undefined
 afterEach(() => host?.dispose())
 
-// Nothing listens here, so provisioning falls back to its local test mode.
+// Offline diagnostics must be requested explicitly
 const OFFLINE_SERVER = "http://127.0.0.1:9/v1"
 
 async function seededProfile(): Promise<Profile> {
@@ -50,7 +50,7 @@ describe.skipIf(!hasDuckd)("RKP API against the real duckd", CONTRACT, () => {
   it("builds a CSR offline and verifies it", async () => {
     host = installHost({ props: DEVICE_PROPS })
     await rkpApi.save(await seededProfile())
-    const provision = await rkpApi.provision()
+    const provision = await rkpApi.provision(true)
     expect(provision.local_test_mode).toBe(true)
     expect(provision.local_verify.signature_valid).toBe(true)
 
@@ -65,5 +65,22 @@ describe.skipIf(!hasDuckd)("RKP API against the real duckd", CONTRACT, () => {
     const error = await rkpApi.keybox().catch((caught: unknown) => caught)
     expect(isDuckError(error)).toBe(true)
     expect(error).not.toMatchObject({ code: "contract_mismatch" })
+  })
+
+  it("reports missing imported files as a backend error without falling back to the saved seed", async () => {
+    host = installHost({ props: DEVICE_PROPS })
+    await rkpApi.save(await seededProfile())
+    const error = await rkpApi
+      .importValidate({
+        mode: "bundle",
+        bundlePath: "/data/local/tmp/missing-dice.json",
+        chainPath: "",
+        signingPath: "",
+        configPath: "",
+      })
+      .catch((caught: unknown) => caught)
+    expect(isDuckError(error)).toBe(true)
+    expect(error).not.toMatchObject({ code: "contract_mismatch" })
+    expect(error).not.toMatchObject({ code: "missing_key_source" })
   })
 })

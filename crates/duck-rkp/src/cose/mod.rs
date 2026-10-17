@@ -6,11 +6,13 @@
 use anyhow::{Result, anyhow};
 
 mod csr;
+pub(crate) mod imported;
 mod keys;
 mod protected;
 #[cfg(test)]
 mod tests;
 
+pub use csr::build_experimental_csr_v3;
 pub use csr::{CsrBundle, build_csr, build_sig_structure, device_info_to_cbor};
 pub use keys::{DeviceKeys, EcKeyPair, generate_ec_keypair};
 pub use protected::{cose_mac0, key_mac_tag};

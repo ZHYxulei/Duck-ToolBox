@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "Atelier RKP",
-    "description": "Créer des demandes de provisionnement de clés à distance, récupérer des certificats, exporter keybox.xml et vérifier des CSR."
+    "description": "Importez une chaîne DICE existante et le matériel de signature correspondant. Aucun CSR préalable requis."
   },
   "tabs": {
     "profile": "Profil",
     "provision": "Demande",
     "keybox": "Keybox",
-    "verify": "Vérifier"
+    "verify": "Diagnostic CSR",
+    "import": "Importer DICE"
   },
   "profile": {
     "keySource": "Source de la clé",
@@ -82,7 +83,7 @@
     "invalid": "Non valide",
     "protectedData": "Données protégées",
     "bytes": "{count} o",
-    "localTestMode": "Le serveur était injoignable ; la CSR a été créée avec une EEK de test locale.",
+    "localTestMode": "Mode diagnostic hors ligne ; aucune demande de certificat envoyée.",
     "fetchEekError": "Échec de la récupération de l’EEK",
     "submitError": "Échec de l’envoi au serveur",
     "chains": "Chaînes de certificats",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "La réponse du serveur RKP n’est pas valide.",
     "device_not_registered": "Le serveur RKP ne reconnaît pas cet appareil.",
     "rkp_client_error": "Le serveur RKP a refusé la demande.",
-    "rkp_server_error": "Le serveur RKP a rencontré une erreur."
+    "rkp_server_error": "Le serveur RKP a rencontré une erreur.",
+    "invalid_material_input": "Complétez les chemins des fichiers.",
+    "material_structure": "La structure du matériel importé est invalide.",
+    "material_chain_invalid": "La chaîne DICE ou la preuve UDS est invalide.",
+    "material_unsupported": "Le matériel de signature ou sa dérivation n’est pas pris en charge.",
+    "material_key_mismatch": "La clé de signature ne correspond pas à la feuille DICE.",
+    "material_ambiguous_match": "Plusieurs dérivations correspondent. Précisez celle à utiliser.",
+    "material_configuration": "La configuration est invalide ou contredit l’ensemble importé.",
+    "challenge_unavailable": "Impossible d’obtenir un défi. Aucune demande de certificat n’a été envoyée.",
+    "submission_unknown": "Le résultat de l’envoi est inconnu. Ne réessayez pas automatiquement.",
+    "invalid_endpoint": "L’adresse du serveur est invalide. Utilisez HTTPS.",
+    "certificate_validation_failed": "Le serveur a répondu, mais la validation du certificat a échoué. Aucun keybox n’a été exporté."
+  },
+  "import": {
+    "title": "Importer le matériel DICE",
+    "workflow": "Importer → Valider → Configurer → Demander en ligne → Exporter",
+    "description": "Importez une chaîne DICE existante et le matériel de signature correspondant. Aucun CSR préalable requis.",
+    "bundle": "Ensemble de matériel DICE (JSON)",
+    "split": "Fichiers de chaîne et de signature séparés",
+    "bundlePath": "Chemin du fichier ensemble",
+    "chainPath": "Chaîne DICE (CBOR brut)",
+    "signingPath": "Matériel de signature (JSON)",
+    "configPath": "Configuration de la demande (JSON, facultatif)",
+    "configHint": "Définissez DeviceInfo, empreinte et serveur dans le fichier de configuration. L’importation ne nécessite ni collecte sur un appareil rooté ni matériel Qualcomm.",
+    "fileHint": "Seuls les chemins sont transmis au backend. Le navigateur ne lit pas et ne conserve pas le contenu du matériel.",
+    "validate": "Valider le matériel",
+    "diagnose": "Créer un CSR de diagnostic (hors ligne)",
+    "issue": "Demander en ligne et exporter le keybox",
+    "busy": "Opération en cours. Attendez avant de modifier les fichiers.",
+    "materialType": "Type de matériel",
+    "algorithm": "Algorithme de signature",
+    "entries": "Entrées DICE",
+    "chain": "Signatures de la chaîne",
+    "key": "Correspondance de la clé",
+    "trust": "Confiance dans l’origine",
+    "unverified": "Non vérifiée",
+    "trustHint": "La vérification locale de la chaîne et de la clé ne prouve ni l’origine matérielle, ni l’enregistrement de l’appareil, ni l’acceptation du serveur.",
+    "ready": "Validation réussie ; prêt pour une demande en ligne.",
+    "configRequired": "Matériel validé. Complétez la configuration puis relancez la validation.",
+    "diagnostic": "Diagnostic uniquement : généré hors ligne ; aucune demande de certificat envoyée.",
+    "exported": "Le serveur a accepté la demande. Les certificats ont été vérifiés et le keybox exporté.",
+    "result": "Fichiers de résultat",
+    "server": "Acceptation du serveur",
+    "certificates": "Vérification des certificats"
+  },
+  "experimental": {
+    "title": "Mode expérimental",
+    "description": "Le flux Seed/KDF crée une identité DICE logicielle. Il n’importe pas de chaîne d’appareil et ne prouve pas l’enregistrement sur le serveur. Utilisez l’importation pour le matériel existant."
   }
 }

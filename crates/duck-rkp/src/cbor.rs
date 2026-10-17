@@ -15,13 +15,160 @@ pub fn encode(value: &Value) -> Result<Vec<u8>> {
 }
 
 pub fn decode(bytes: &[u8]) -> Result<Value> {
+    preflight(bytes)?;
     let mut reader = Cursor::new(bytes);
-    let value = from_reader(&mut reader).context("decode CBOR")?;
+    let value: Value = from_reader(&mut reader).context("decode CBOR")?;
     ensure!(
         reader.position() == bytes.len() as u64,
         "trailing data after CBOR item"
     );
+    validate_unique_maps(&value)?;
     Ok(value)
+}
+
+pub const MAX_INPUT_BYTES: usize = 256 * 1024;
+const MAX_DEPTH: usize = 16;
+const MAX_CONTAINER_ITEMS: u64 = 64;
+
+// inspect lengths and nesting before the general decoder can allocate containers
+fn preflight(bytes: &[u8]) -> Result<()> {
+    ensure!(
+        !bytes.is_empty() && bytes.len() <= MAX_INPUT_BYTES,
+        "CBOR input must contain 1..262144 bytes"
+    );
+    let mut scanner = Scanner { bytes, position: 0 };
+    scanner.item(0)?;
+    ensure!(
+        scanner.position == bytes.len(),
+        "trailing data after CBOR item"
+    );
+    Ok(())
+}
+
+struct Scanner<'a> {
+    bytes: &'a [u8],
+    position: usize,
+}
+
+impl Scanner<'_> {
+    fn byte(&mut self) -> Result<u8> {
+        let byte = *self.bytes.get(self.position).context("truncated CBOR")?;
+        self.position += 1;
+        Ok(byte)
+    }
+
+    fn argument(&mut self, additional: u8) -> Result<Option<u64>> {
+        let count = match additional {
+            0..=23 => return Ok(Some(u64::from(additional))),
+            24 => 1,
+            25 => 2,
+            26 => 4,
+            27 => 8,
+            31 => return Ok(None),
+            _ => bail!("reserved CBOR additional information"),
+        };
+        let mut value = 0;
+        for _ in 0..count {
+            value = (value << 8) | u64::from(self.byte()?);
+        }
+        Ok(Some(value))
+    }
+
+    fn item(&mut self, depth: usize) -> Result<()> {
+        ensure!(depth <= MAX_DEPTH, "CBOR nesting exceeds 16 levels");
+        let initial = self.byte()?;
+        let major = initial >> 5;
+        let argument = self.argument(initial & 31)?;
+        match major {
+            0 | 1 | 7 => ensure!(argument.is_some(), "unexpected CBOR break"),
+            2 | 3 => match argument {
+                Some(length) => {
+                    let length = usize::try_from(length).context("CBOR length overflow")?;
+                    self.position = self
+                        .position
+                        .checked_add(length)
+                        .context("CBOR length overflow")?;
+                    ensure!(self.position <= self.bytes.len(), "truncated CBOR string");
+                }
+                None => {
+                    while self.bytes.get(self.position) != Some(&0xff) {
+                        let chunk = *self
+                            .bytes
+                            .get(self.position)
+                            .context("truncated CBOR string")?;
+                        ensure!(
+                            chunk >> 5 == major && chunk & 31 != 31,
+                            "invalid indefinite CBOR string chunk"
+                        );
+                        self.item(depth + 1)?;
+                    }
+                    self.position += 1;
+                }
+            },
+            4 | 5 => {
+                if let Some(length) = argument {
+                    ensure!(
+                        length <= MAX_CONTAINER_ITEMS,
+                        "CBOR container exceeds 64 entries"
+                    );
+                    for _ in 0..length {
+                        self.item(depth + 1)?;
+                        if major == 5 {
+                            self.item(depth + 1)?;
+                        }
+                    }
+                } else {
+                    let mut count = 0;
+                    while self.bytes.get(self.position) != Some(&0xff) {
+                        count += 1;
+                        ensure!(
+                            count <= MAX_CONTAINER_ITEMS,
+                            "CBOR container exceeds 64 entries"
+                        );
+                        self.item(depth + 1)?;
+                        if major == 5 {
+                            self.item(depth + 1)?;
+                        }
+                    }
+                    self.position += 1;
+                }
+            }
+            6 => {
+                ensure!(argument.is_some(), "invalid CBOR tag");
+                self.item(depth + 1)?;
+            }
+            _ => unreachable!(),
+        }
+        Ok(())
+    }
+}
+
+fn validate_unique_maps(value: &Value) -> Result<()> {
+    match value {
+        Value::Map(entries) => {
+            let mut seen = std::collections::HashSet::new();
+            for (key, value) in entries {
+                if !seen.insert(encode(key)?) {
+                    let label = match key {
+                        Value::Integer(number) => i128::from(*number).to_string(),
+                        Value::Text(text) => text.clone(),
+                        _ => "CBOR map key".to_owned(),
+                    };
+                    bail!("CBOR map contains duplicate key `{label}`");
+                }
+                validate_unique_maps(key)?;
+                validate_unique_maps(value)?;
+            }
+        }
+        Value::Array(items) => {
+            for item in items {
+                validate_unique_maps(item)?;
+            }
+        }
+        Value::Tag(_, inner) => validate_unique_maps(inner)?,
+        _ => {}
+    }
+    Ok(())
 }
 
 pub fn int(value: i128) -> Value {
@@ -145,6 +292,18 @@ mod tests {
         for trailing in [0, 0xff] {
             assert!(decode(&[0x81, 0, trailing]).is_err());
         }
+    }
+
+    #[test]
+    fn decode_rejects_resource_exhaustion_before_decoding() {
+        let mut nested = vec![0x81; 17];
+        nested.push(0);
+        assert!(decode(&nested).is_err());
+        assert!(decode(&[0x9a, 0xff, 0xff, 0xff, 0xff]).is_err());
+        let mut wide = vec![0xb8, 65];
+        wide.extend(vec![0; 130]);
+        assert!(decode(&wide).is_err());
+        assert!(decode(&vec![0; 262_145]).is_err());
     }
 
     #[test]

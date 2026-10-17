@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "RKP 工作台",
-    "description": "建立遠端金鑰佈建（RKP）要求、取得憑證、匯出 keybox.xml 並驗證 CSR。"
+    "description": "匯入現有 DICE 鏈與相符的簽章材料，不必事先提供 CSR。"
   },
   "tabs": {
     "profile": "設定檔",
     "provision": "申請",
     "keybox": "Keybox",
-    "verify": "驗證"
+    "verify": "CSR 診斷",
+    "import": "匯入 DICE"
   },
   "profile": {
     "keySource": "金鑰材料",
@@ -82,7 +83,7 @@
     "invalid": "無效",
     "protectedData": "受保護的資料",
     "bytes": "{count} 位元組",
-    "localTestMode": "無法連線至伺服器，因此改用本機測試 EEK 建立 CSR。",
+    "localTestMode": "離線診斷模式，未發送憑證申請。",
     "fetchEekError": "無法取得 EEK",
     "submitError": "無法提交至伺服器",
     "chains": "憑證鏈",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "RKP 伺服器的回應無效。",
     "device_not_registered": "RKP 伺服器無法辨識此裝置。",
     "rkp_client_error": "RKP 伺服器拒絕了要求。",
-    "rkp_server_error": "RKP 伺服器發生錯誤。"
+    "rkp_server_error": "RKP 伺服器發生錯誤。",
+    "invalid_material_input": "請補齊材料檔案路徑。",
+    "material_structure": "匯入材料結構無效。",
+    "material_chain_invalid": "DICE 鏈或 UDS 證據無效。",
+    "material_unsupported": "不支援此簽章材料或衍生方式。",
+    "material_key_mismatch": "簽章金鑰與 DICE 葉公鑰不符。",
+    "material_ambiguous_match": "有多個簽章衍生方式相符，請明確指定。",
+    "material_configuration": "匯入的申請設定無效，或與材料套件衝突。",
+    "challenge_unavailable": "取得挑戰失敗，未提交憑證申請。",
+    "submission_unknown": "提交結果未知，請勿自動重試。",
+    "invalid_endpoint": "服務位址無效，請使用 HTTPS。",
+    "certificate_validation_failed": "伺服器已回應，但憑證驗證未通過，未匯出 Keybox。"
+  },
+  "import": {
+    "title": "匯入 DICE 材料",
+    "workflow": "匯入 → 驗證 → 設定 → 線上申請 → 匯出",
+    "description": "匯入現有 DICE 鏈與相符的簽章材料，不必事先提供 CSR。",
+    "bundle": "DICE 材料套件（JSON）",
+    "split": "分別指定鏈與簽章材料",
+    "bundlePath": "材料套件檔案路徑",
+    "chainPath": "DICE 鏈檔案（原始 CBOR）",
+    "signingPath": "簽章材料檔案（JSON）",
+    "configPath": "申請設定檔（JSON，選填）",
+    "configHint": "在設定檔填寫 DeviceInfo、建置指紋與服務位址。匯入使用現有檔案，不要求 root 裝置擷取或高通硬體。",
+    "fileHint": "僅向後端傳遞檔案路徑，瀏覽器不讀取或永久儲存材料內容。",
+    "validate": "驗證材料",
+    "diagnose": "產生診斷 CSR（離線）",
+    "issue": "線上申請並匯出 Keybox",
+    "busy": "正在處理，請等候完成後再修改檔案。",
+    "materialType": "材料類型",
+    "algorithm": "簽章演算法",
+    "entries": "DICE 項目",
+    "chain": "鏈簽章",
+    "key": "簽章金鑰相符",
+    "trust": "來源信任",
+    "unverified": "未驗證",
+    "trustHint": "本機鏈與金鑰驗證不代表硬體來源、裝置註冊狀態或伺服器接受。",
+    "ready": "驗證通過，可以線上申請。",
+    "configRequired": "材料驗證通過。請補齊申請設定後重新驗證。",
+    "diagnostic": "僅供診斷：已離線產生，未發送憑證申請。",
+    "exported": "伺服器已接受申請，憑證驗證通過，Keybox 已匯出。",
+    "result": "結果檔案",
+    "server": "伺服器接受",
+    "certificates": "憑證驗證"
+  },
+  "experimental": {
+    "title": "實驗模式",
+    "description": "現有 Seed/KDF 流程建立軟體 DICE 身分，不會匯入裝置鏈，也不代表已向伺服器註冊。現有 DICE 材料請使用匯入入口。"
   }
 }

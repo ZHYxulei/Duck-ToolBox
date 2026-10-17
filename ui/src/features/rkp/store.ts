@@ -1,8 +1,8 @@
 import { defineStore } from "pinia"
-import { ref } from "vue"
+import { computed, ref, watch } from "vue"
 
-import type { Info, Keybox, Provision, Verify } from "./api"
-import { rkpApi } from "./api"
+import type { ImportDraft, ImportResult, Info, Keybox, Provision, Verify } from "./api"
+import { hasImportFiles, rkpApi } from "./api"
 import type { Draft } from "./draft"
 import { applyDetected, hasGenericDevice, toDraft, toProfile } from "./draft"
 
@@ -15,6 +15,62 @@ export const useRkpStore = defineStore("rkp", () => {
   const keybox = ref<Keybox | null>(null)
   const verify = ref<Verify | null>(null)
   const verifyPath = ref("")
+  const importDraft = ref<ImportDraft>({
+    mode: "bundle",
+    bundlePath: "",
+    chainPath: "",
+    signingPath: "",
+    configPath: "",
+  })
+  const importResult = ref<ImportResult | null>(null)
+  const importBusy = ref(false)
+  const importReady = ref(false)
+  const importComplete = computed(() => hasImportFiles(importDraft.value))
+  let importRevision = 0
+
+  watch(
+    importDraft,
+    () => {
+      importRevision++
+      importResult.value = null
+      importReady.value = false
+    },
+    { deep: true, flush: "sync" },
+  )
+  watch(
+    draft,
+    () => {
+      info.value = provision.value = keybox.value = null
+    },
+    { deep: true, flush: "sync" },
+  )
+  watch(verifyPath, () => (verify.value = null), { flush: "sync" })
+
+  async function runImport(action: "validate" | "diagnose" | "issue") {
+    if (importBusy.value || !importComplete.value || (action === "issue" && !importReady.value)) {
+      return
+    }
+    const revision = importRevision
+    const input = { ...importDraft.value }
+    importBusy.value = true
+    importResult.value = null
+    try {
+      const result = await {
+        validate: rkpApi.importValidate,
+        diagnose: rkpApi.importDiagnose,
+        issue: rkpApi.importIssue,
+      }[action](input)
+      if (revision === importRevision) {
+        importResult.value = result
+        if (result.stage === "validated") importReady.value = result.ready_for_issuance
+      }
+    } catch (error) {
+      importReady.value = false
+      throw error
+    } finally {
+      importBusy.value = false
+    }
+  }
 
   async function load() {
     const shown = await rkpApi.show()
@@ -58,13 +114,21 @@ export const useRkpStore = defineStore("rkp", () => {
     keybox,
     verify,
     verifyPath,
+    importDraft,
+    importResult,
+    importBusy,
+    importReady,
+    importComplete,
+    validateImport: () => runImport("validate"),
+    diagnoseImport: () => runImport("diagnose"),
+    issueImport: () => runImport("issue"),
     load,
     save,
     detect,
     clear,
     checkKey: async () => (info.value = await run(rkpApi.info)),
     runProvision: async () => {
-      provision.value = await run(rkpApi.provision)
+      provision.value = await run(() => rkpApi.provision())
       verifyPath.value = provision.value.csr_path
     },
     runKeybox: async () => {

@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "Ruang Kerja RKP",
-    "description": "Buat permintaan Penyediaan Kunci Jarak Jauh (RKP), ambil sertifikat, ekspor keybox.xml, dan verifikasi CSR."
+    "description": "Impor rantai DICE yang sudah ada dan materi penandatanganan yang cocok. CSR tidak perlu disiapkan sebelumnya."
   },
   "tabs": {
     "profile": "Profil",
     "provision": "Permintaan",
     "keybox": "Keybox",
-    "verify": "Verifikasi"
+    "verify": "Diagnostik CSR",
+    "import": "Impor DICE"
   },
   "profile": {
     "keySource": "Materi kunci",
@@ -82,7 +83,7 @@
     "invalid": "Tidak valid",
     "protectedData": "Data terlindungi",
     "bytes": "{count} byte",
-    "localTestMode": "Server tidak dapat dijangkau; CSR dibuat menggunakan EEK uji lokal.",
+    "localTestMode": "Mode diagnostik luring; tidak ada permintaan sertifikat yang dikirim.",
     "fetchEekError": "Gagal mengambil EEK",
     "submitError": "Gagal mengirim ke server",
     "chains": "Rantai sertifikat",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "Respons server RKP tidak valid.",
     "device_not_registered": "Server RKP tidak mengenali perangkat ini.",
     "rkp_client_error": "Server RKP menolak permintaan.",
-    "rkp_server_error": "Server RKP mengalami error."
+    "rkp_server_error": "Server RKP mengalami error.",
+    "invalid_material_input": "Lengkapi jalur berkas materi.",
+    "material_structure": "Struktur materi impor tidak valid.",
+    "material_chain_invalid": "Rantai DICE atau bukti UDS tidak valid.",
+    "material_unsupported": "Materi penandatanganan atau derivasi tidak didukung.",
+    "material_key_mismatch": "Kunci penandatanganan tidak cocok dengan daun DICE.",
+    "material_ambiguous_match": "Lebih dari satu derivasi cocok. Tentukan derivasi secara eksplisit.",
+    "material_configuration": "Konfigurasi permintaan tidak valid atau bertentangan dengan bundel.",
+    "challenge_unavailable": "Tidak dapat memperoleh tantangan. Tidak ada permintaan sertifikat yang dikirim.",
+    "submission_unknown": "Hasil pengiriman tidak diketahui. Jangan mencoba ulang secara otomatis.",
+    "invalid_endpoint": "Alamat server tidak valid. Gunakan HTTPS.",
+    "certificate_validation_failed": "Server telah merespons, tetapi validasi sertifikat gagal. Tidak ada keybox yang diekspor."
+  },
+  "import": {
+    "title": "Impor materi DICE",
+    "workflow": "Impor → Validasi → Konfigurasi → Minta daring → Ekspor",
+    "description": "Impor rantai DICE yang sudah ada dan materi penandatanganan yang cocok. CSR tidak perlu disiapkan sebelumnya.",
+    "bundle": "Bundel materi DICE (JSON)",
+    "split": "Berkas rantai dan tanda tangan terpisah",
+    "bundlePath": "Jalur berkas bundel",
+    "chainPath": "Berkas rantai DICE (CBOR mentah)",
+    "signingPath": "Berkas materi penandatanganan (JSON)",
+    "configPath": "Berkas konfigurasi permintaan (JSON, opsional)",
+    "configHint": "Atur DeviceInfo, sidik build, dan server dalam berkas konfigurasi. Tidak memerlukan pengambilan data perangkat melalui root atau perangkat keras Qualcomm.",
+    "fileHint": "Hanya jalur berkas yang diteruskan ke backend. Peramban tidak membaca atau menyimpan isi materi secara permanen.",
+    "validate": "Validasi materi",
+    "diagnose": "Buat CSR diagnostik (luring)",
+    "issue": "Minta daring dan ekspor keybox",
+    "busy": "Operasi berlangsung. Tunggu sebelum mengubah berkas.",
+    "materialType": "Jenis materi",
+    "algorithm": "Algoritme tanda tangan",
+    "entries": "Entri DICE",
+    "chain": "Tanda tangan rantai",
+    "key": "Kunci penandatanganan cocok",
+    "trust": "Kepercayaan sumber",
+    "unverified": "Belum diverifikasi",
+    "trustHint": "Pemeriksaan rantai dan kunci lokal tidak membuktikan asal perangkat keras, pendaftaran perangkat, atau penerimaan server.",
+    "ready": "Validasi berhasil; siap mengajukan permintaan daring.",
+    "configRequired": "Materi tervalidasi. Lengkapi konfigurasi permintaan lalu validasi kembali.",
+    "diagnostic": "Hanya diagnostik: dibuat secara luring; tidak ada permintaan sertifikat yang dikirim.",
+    "exported": "Server menerima permintaan. Sertifikat telah diverifikasi dan keybox diekspor.",
+    "result": "Berkas hasil",
+    "server": "Penerimaan server",
+    "certificates": "Verifikasi sertifikat"
+  },
+  "experimental": {
+    "title": "Mode eksperimental",
+    "description": "Alur Seed/KDF membuat identitas DICE perangkat lunak. Tidak mengimpor rantai perangkat atau membuktikan pendaftaran server. Gunakan tab impor untuk materi yang sudah ada."
   }
 }

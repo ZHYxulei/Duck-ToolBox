@@ -38,7 +38,6 @@ const infoRows = computed(() =>
         { label: t("profile.mode"), value: info.value.mode },
         { label: t("profile.curve"), value: info.value.curve },
         { label: t("profile.publicKey"), value: info.value.public_key_hex, mono: true, copy: true },
-        { label: t("profile.seedHex"), value: info.value.seed_hex, mono: true, copy: true },
       ]
     : [],
 )

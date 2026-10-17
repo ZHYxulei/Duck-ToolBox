@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "RKP 工作台",
-    "description": "构造远程密钥配置（RKP）请求、申请证书、导出 keybox.xml 并校验 CSR。"
+    "description": "导入已有 DICE 链与匹配的签名材料，无需预先提供 CSR。"
   },
   "tabs": {
     "profile": "配置",
     "provision": "申请",
     "keybox": "Keybox",
-    "verify": "校验"
+    "verify": "CSR 诊断",
+    "import": "导入 DICE"
   },
   "profile": {
     "keySource": "密钥材料",
@@ -82,7 +83,7 @@
     "invalid": "无效",
     "protectedData": "保护数据",
     "bytes": "{count} 字节",
-    "localTestMode": "无法连接服务器，CSR 使用本地测试 EEK 构造。",
+    "localTestMode": "离线诊断模式，未发起证书申请。",
     "fetchEekError": "获取 EEK 失败",
     "submitError": "提交到服务器失败",
     "chains": "证书链",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "RKP 服务器返回的数据无效。",
     "device_not_registered": "RKP 服务器无法识别此设备。",
     "rkp_client_error": "RKP 服务器拒绝了请求。",
-    "rkp_server_error": "RKP 服务器出错。"
+    "rkp_server_error": "RKP 服务器出错。",
+    "invalid_material_input": "请补全材料文件路径。",
+    "material_structure": "导入材料结构无效。",
+    "material_chain_invalid": "DICE 链或 UDS 证据无效。",
+    "material_unsupported": "不支持该签名材料或派生方式。",
+    "material_key_mismatch": "签名密钥与 DICE 叶公钥不匹配。",
+    "material_ambiguous_match": "有多个签名派生方式匹配，请明确指定。",
+    "material_configuration": "导入的申请配置无效，或与材料包冲突。",
+    "challenge_unavailable": "获取挑战失败，未提交证书申请。",
+    "submission_unknown": "提交结果未知，请勿自动重试。",
+    "invalid_endpoint": "服务地址无效，请使用 HTTPS。",
+    "certificate_validation_failed": "服务器已返回响应，但证书校验未通过，未导出 Keybox。"
+  },
+  "import": {
+    "title": "导入 DICE 材料",
+    "workflow": "导入 → 校验 → 配置 → 在线申请 → 导出",
+    "description": "导入已有 DICE 链与匹配的签名材料，无需预先提供 CSR。",
+    "bundle": "DICE 材料包（JSON）",
+    "split": "分别指定链与签名材料",
+    "bundlePath": "材料包文件路径",
+    "chainPath": "DICE 链文件（原始 CBOR）",
+    "signingPath": "签名材料文件（JSON）",
+    "configPath": "申请配置文件（JSON，可选）",
+    "configHint": "在配置文件中填写 DeviceInfo、构建指纹与服务地址。导入使用已有文件，不要求 root 设备采集或高通硬件。",
+    "fileHint": "仅向后端传递文件路径，浏览器不读取或持久保存材料内容。",
+    "validate": "校验材料",
+    "diagnose": "生成诊断 CSR（离线）",
+    "issue": "在线申请并导出 Keybox",
+    "busy": "正在处理，请等待完成后再修改文件。",
+    "materialType": "材料类型",
+    "algorithm": "签名算法",
+    "entries": "DICE 条目",
+    "chain": "链签名",
+    "key": "签名密钥匹配",
+    "trust": "来源信任",
+    "unverified": "未验证",
+    "trustHint": "本地链与密钥校验不证明硬件来源、设备注册状态或服务器接受。",
+    "ready": "校验通过，可以在线申请。",
+    "configRequired": "材料校验通过。请补全申请配置后重新校验。",
+    "diagnostic": "仅供诊断：已离线生成，没有发起证书申请。",
+    "exported": "服务器已接受申请，证书校验通过，Keybox 已导出。",
+    "result": "结果文件",
+    "server": "服务器接受",
+    "certificates": "证书校验"
+  },
+  "experimental": {
+    "title": "实验模式",
+    "description": "现有 Seed/KDF 流程构造软件 DICE 身份，不会导入设备链，也不证明服务器注册。已有 DICE 材料请使用导入入口。"
   }
 }

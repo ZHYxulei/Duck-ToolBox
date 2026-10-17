@@ -7,6 +7,7 @@ import { NAMESPACE } from "./i18n"
 
 export default defineFeature({
   id: "rkp",
+  contract: 2,
   namespace: NAMESPACE,
   icon: KeyRound,
   order: 20,

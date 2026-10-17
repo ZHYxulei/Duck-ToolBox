@@ -2,6 +2,16 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum RkpError {
+    #[error(
+        "RKP endpoint must use HTTPS (HTTP is allowed only for loopback tests), without credentials, query or fragment"
+    )]
+    InvalidEndpoint,
+    #[error("server challenge unavailable; no certificate request was submitted")]
+    ChallengeUnavailable,
+    #[error("certificate submission result is unknown; do not retry automatically")]
+    SubmissionUnknown,
+    #[error("returned certificates failed validation; no keybox was exported: {0}")]
+    CertificateValidation(String),
     #[error("unsupported profile name `{0}`; only `default` is available")]
     UnsupportedProfile(String),
     #[error("key material is not configured; save a profile or pass `--seed` / `--hw-key`")]
@@ -39,6 +49,10 @@ pub enum RkpError {
 impl RkpError {
     pub fn code(&self) -> &'static str {
         match self {
+            Self::InvalidEndpoint => "invalid_endpoint",
+            Self::ChallengeUnavailable => "challenge_unavailable",
+            Self::SubmissionUnknown => "submission_unknown",
+            Self::CertificateValidation(_) => "certificate_validation_failed",
             Self::UnsupportedProfile(_) => "unsupported_profile",
             Self::MissingKeySource => "missing_key_source",
             Self::MissingFingerprint => "missing_fingerprint",
@@ -61,6 +75,9 @@ impl RkpError {
 
 /// Maps any error raised by this crate to its stable WebUI error code.
 pub fn code_of(error: &anyhow::Error) -> &'static str {
+    if let Some(code) = crate::material::error_code(error) {
+        return code;
+    }
     error
         .chain()
         .find_map(|cause| cause.downcast_ref::<RkpError>())

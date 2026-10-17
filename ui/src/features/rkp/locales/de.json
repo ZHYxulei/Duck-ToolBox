@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "RKP-Werkbank",
-    "description": "Anfragen für Remote Key Provisioning erstellen, Zertifikate abrufen, keybox.xml exportieren und CSRs prüfen."
+    "description": "Vorhandene DICE-Kette und passendes Signaturmaterial importieren. Eine CSR wird vorab nicht benötigt."
   },
   "tabs": {
     "profile": "Profil",
     "provision": "Anfordern",
     "keybox": "Keybox",
-    "verify": "Prüfen"
+    "verify": "CSR-Diagnose",
+    "import": "DICE-Import"
   },
   "profile": {
     "keySource": "Schlüsselmaterial",
@@ -82,7 +83,7 @@
     "invalid": "Ungültig",
     "protectedData": "Geschützte Daten",
     "bytes": "{count} Byte",
-    "localTestMode": "Der Server war nicht erreichbar, daher wurde der CSR mit einem lokalen Test-EEK erstellt.",
+    "localTestMode": "Offline-Diagnosemodus; keine Zertifikatsanfrage gesendet.",
     "fetchEekError": "EEK konnte nicht abgerufen werden",
     "submitError": "Senden an den Server fehlgeschlagen",
     "chains": "Zertifikatsketten",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "Die Antwort des RKP-Servers ist ungültig.",
     "device_not_registered": "Der RKP-Server kennt dieses Gerät nicht.",
     "rkp_client_error": "Der RKP-Server hat die Anfrage abgelehnt.",
-    "rkp_server_error": "Beim RKP-Server ist ein Fehler aufgetreten."
+    "rkp_server_error": "Beim RKP-Server ist ein Fehler aufgetreten.",
+    "invalid_material_input": "Materialdateipfade vervollständigen.",
+    "material_structure": "Die Struktur des importierten Materials ist ungültig.",
+    "material_chain_invalid": "DICE-Kette oder UDS-Nachweis ist ungültig.",
+    "material_unsupported": "Signaturmaterial oder Ableitung wird nicht unterstützt.",
+    "material_key_mismatch": "Der Signaturschlüssel passt nicht zum DICE-Blatt.",
+    "material_ambiguous_match": "Mehrere Ableitungen passen. Die Ableitung ausdrücklich angeben.",
+    "material_configuration": "Die Anfragekonfiguration ist ungültig oder widerspricht dem Paket.",
+    "challenge_unavailable": "Die Challenge konnte nicht abgerufen werden. Es wurde keine Zertifikatsanfrage gesendet.",
+    "submission_unknown": "Das Ergebnis der Übermittlung ist unbekannt. Nicht automatisch erneut versuchen.",
+    "invalid_endpoint": "Ungültige Serveradresse. HTTPS verwenden.",
+    "certificate_validation_failed": "Der Server hat geantwortet, aber die Zertifikatsprüfung ist fehlgeschlagen. Keine Keybox wurde exportiert."
+  },
+  "import": {
+    "title": "DICE-Material importieren",
+    "workflow": "Importieren → Prüfen → Konfigurieren → Online anfordern → Exportieren",
+    "description": "Vorhandene DICE-Kette und passendes Signaturmaterial importieren. Eine CSR wird vorab nicht benötigt.",
+    "bundle": "DICE-Materialpaket (JSON)",
+    "split": "Getrennte Ketten- und Signaturdateien",
+    "bundlePath": "Pfad zur Paketdatei",
+    "chainPath": "DICE-Kette (rohes CBOR)",
+    "signingPath": "Signaturmaterial (JSON)",
+    "configPath": "Anfragekonfiguration (JSON, optional)",
+    "configHint": "DeviceInfo, Build-Fingerabdruck und Server in der Konfigurationsdatei festlegen. Keine Geräteerfassung mit Root oder Qualcomm-Hardware erforderlich.",
+    "fileHint": "Nur Dateipfade werden an das Backend übergeben. Der Browser liest oder speichert keine Materialinhalte.",
+    "validate": "Material prüfen",
+    "diagnose": "Diagnose-CSR erstellen (offline)",
+    "issue": "Online anfordern und Keybox exportieren",
+    "busy": "Vorgang läuft. Dateien erst danach ändern.",
+    "materialType": "Materialtyp",
+    "algorithm": "Signaturalgorithmus",
+    "entries": "DICE-Einträge",
+    "chain": "Kettensignaturen",
+    "key": "Signaturschlüssel stimmt überein",
+    "trust": "Vertrauen in die Herkunft",
+    "unverified": "Nicht geprüft",
+    "trustHint": "Lokale Ketten- und Schlüsselprüfungen belegen weder Hardwareherkunft noch Geräteregistrierung oder Serverannahme.",
+    "ready": "Prüfung erfolgreich; bereit für eine Online-Anfrage.",
+    "configRequired": "Material geprüft. Anfragekonfiguration vervollständigen und erneut prüfen.",
+    "diagnostic": "Nur Diagnose: offline erstellt; keine Zertifikatsanfrage gesendet.",
+    "exported": "Der Server hat die Anfrage angenommen. Zertifikate geprüft und Keybox exportiert.",
+    "result": "Ergebnisdateien",
+    "server": "Serverannahme",
+    "certificates": "Zertifikatsprüfung"
+  },
+  "experimental": {
+    "title": "Experimenteller Modus",
+    "description": "Der bisherige Seed/KDF-Ablauf erstellt eine Software-DICE-Identität. Er importiert keine Gerätekette und belegt keine Serverregistrierung. Vorhandenes Material über den Import laden."
   }
 }

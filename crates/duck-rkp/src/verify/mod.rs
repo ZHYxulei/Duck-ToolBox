@@ -55,6 +55,32 @@ pub struct VerifyReport {
     pub keys_to_sign: usize,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct DiceChainReport {
+    pub dice_entries: usize,
+    pub root_public_key: Vec<u8>,
+    pub root_algorithm: i128,
+    pub leaf_public_key: Vec<u8>,
+    pub leaf_algorithm: i128,
+}
+
+pub fn verify_dice_chain(bytes: &[u8]) -> Result<DiceChainReport> {
+    let value = decode(bytes)?;
+    let chain = as_array(&value, "DICE chain")?;
+    if !(2..=32).contains(&chain.len()) {
+        return Err(anyhow!("DICE chain must contain 2..32 entries"));
+    }
+    let root = extract_uds_key(chain)?;
+    let leaf = verify_dice_chain_and_extract_leaf_key(chain)?;
+    Ok(DiceChainReport {
+        dice_entries: chain.len(),
+        root_public_key: root.public_key_bytes,
+        root_algorithm: root.algorithm,
+        leaf_public_key: leaf.public_key_bytes,
+        leaf_algorithm: leaf.algorithm,
+    })
+}
+
 pub fn verify_csr(bytes: &[u8]) -> Result<VerifyReport> {
     let value = decode(bytes)?;
     let csr = as_array(&value, "CSR")?;
@@ -70,9 +96,9 @@ pub fn verify_csr(bytes: &[u8]) -> Result<VerifyReport> {
     validate_uds_certs(&csr[1])?;
 
     let dice_chain = as_array(&csr[2], "DICE chain")?;
-    if dice_chain.len() < 2 {
+    if !(2..=32).contains(&dice_chain.len()) {
         return Err(anyhow!(
-            "DICE chain must contain a UDS key and at least one DICE entry"
+            "DICE chain must contain a UDS key and 1..31 DICE entries"
         ));
     }
     let uds = extract_uds_key(dice_chain)?;
@@ -112,6 +138,9 @@ pub fn verify_csr(bytes: &[u8]) -> Result<VerifyReport> {
     let brand = validate_device_info(&csr_payload_items[2])?;
     let keys_to_sign = as_array(&csr_payload_items[3], "keysToSign")?;
     validate_keys_to_sign(keys_to_sign)?;
+    if !signature_valid {
+        return Err(anyhow!("signed data signature is invalid"));
+    }
 
     Ok(VerifyReport {
         version,

@@ -204,8 +204,8 @@ fn validate_dice_mode(
             "{mode_label} is a CBOR integer, which profile `{}` does not allow; only the Open DICE byte string form is accepted",
             effective_profile_name(profile_name)
         )),
-        other => Err(anyhow!(
-            "{mode_label} is neither CBOR bytes nor a CBOR integer: {other:?}"
+        _ => Err(anyhow!(
+            "{mode_label} is neither CBOR bytes nor a CBOR integer"
         )),
     }
 }

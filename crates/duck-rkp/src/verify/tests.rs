@@ -159,6 +159,53 @@ fn verify_reports_valid_signature() {
 }
 
 #[test]
+fn verify_rejects_invalid_keymint_signature() {
+    let mut csr = decode(&valid_csr()).unwrap();
+    byte_string(&mut array(&mut array(&mut csr)[3])[3])[0] ^= 1;
+    assert!(verify_csr(&encode(&csr).unwrap()).is_err());
+}
+
+#[test]
+fn verify_accepts_noncritical_cose_metadata() {
+    let keys = DeviceKeys::from_seed([0x11; 32]);
+    let mut csr = decode(&valid_csr()).unwrap();
+    let root = &mut array(&mut array(&mut csr)[2])[0];
+    let Value::Map(root) = root else {
+        panic!("root key");
+    };
+    root.push((int(2), bytes(vec![1, 2])));
+    root.push((int(4), Value::Array(vec![int(2)])));
+    let signed = array(&mut array(&mut csr)[3]);
+    signed[0] = bytes(
+        encode(&Value::Map(vec![
+            (int(1), int(-8)),
+            (int(4), bytes(vec![1])),
+        ]))
+        .unwrap(),
+    );
+    signed[1] = Value::Map(vec![(int(3), text("application/cbor"))]);
+    sign_entry(signed, &keys);
+    assert!(verify_csr(&encode(&csr).unwrap()).unwrap().signature_valid);
+}
+
+#[test]
+fn verify_rejects_unknown_critical_cose_headers() {
+    let keys = DeviceKeys::from_seed([0x11; 32]);
+    let mut csr = decode(&valid_csr()).unwrap();
+    let signed = array(&mut array(&mut csr)[3]);
+    signed[0] = bytes(
+        encode(&Value::Map(vec![
+            (int(1), int(-8)),
+            (int(2), Value::Array(vec![int(42)])),
+            (int(42), bytes(vec![1])),
+        ]))
+        .unwrap(),
+    );
+    sign_entry(signed, &keys);
+    assert!(verify_csr(&encode(&csr).unwrap()).is_err());
+}
+
+#[test]
 fn verify_rejects_signed_payloads_and_headers_with_trailing_cbor() {
     let keys = DeviceKeys::from_seed([0x11; 32]);
     for (index, nested) in [(0, false), (2, false), (2, true)] {
@@ -458,4 +505,45 @@ fn parse_cose_public_key_accepts_p384() {
 
     let parsed = parse_cose_public_key(&entries, "P-384 key").unwrap();
     assert_eq!(parsed.public_key_bytes.len(), x.len() + y.len());
+}
+
+#[test]
+fn parse_cose_public_key_rejects_weak_ed25519_points() {
+    let mut identity = vec![0; 32];
+    identity[0] = 1;
+    let entries = vec![
+        (int(1), int(1)),
+        (int(3), int(-8)),
+        (int(-1), int(6)),
+        (int(-2), bytes(identity)),
+    ];
+    assert!(parse_cose_public_key(&entries, "weak key").is_err());
+}
+
+#[test]
+fn parse_cose_public_key_decompresses_p256_and_p384_y_coordinates() {
+    let p256 = p256::SecretKey::from_slice(&[0x22; 32])
+        .unwrap()
+        .public_key()
+        .to_sec1_point(false);
+    let p384 = P384SecretKey::from_slice(&[0x33; 48])
+        .unwrap()
+        .public_key()
+        .to_sec1_point(false);
+    for (curve, algorithm, raw) in [(1, -7, p256.as_bytes()), (2, -35, p384.as_bytes())] {
+        let width = (raw.len() - 1) / 2;
+        let parity = raw[raw.len() - 1] & 1 != 0;
+        let entries = vec![
+            (int(1), int(2)),
+            (int(3), int(algorithm)),
+            (int(-1), int(curve)),
+            (int(-2), bytes(raw[1..1 + width].to_vec())),
+            (int(-3), Value::Bool(parity)),
+        ];
+        let parsed = parse_cose_public_key(&entries, "compressed public key").unwrap();
+        assert_eq!(parsed.public_key_bytes, raw[1..]);
+        let mut invalid = entries;
+        invalid[3].1 = bytes(vec![0xff; width]);
+        assert!(parse_cose_public_key(&invalid, "invalid compressed public key").is_err());
+    }
 }

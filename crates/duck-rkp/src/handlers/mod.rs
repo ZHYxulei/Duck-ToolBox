@@ -1,7 +1,7 @@
-use std::{fs, path::Path};
+use std::fs;
 
 use anyhow::{Context, Result, anyhow};
-use duck_core::{AppPaths, Failure, fs::write_bytes_atomic};
+use duck_core::AppPaths;
 use serde_json::{Value, json};
 
 use crate::{
@@ -12,6 +12,7 @@ use crate::{
     verify::verify_csr,
 };
 
+pub(crate) mod import;
 pub(crate) mod info;
 pub(crate) mod keybox;
 pub(crate) mod profile;
@@ -57,14 +58,6 @@ fn ensure_request_context(profile: &ProfileData) -> Result<String> {
 
     validate_device_info_for_request(&profile.device)?;
     Ok(profile.server_url.trim().to_owned())
-}
-
-fn write_output(path: &Path, bytes: &[u8], details: Option<Value>) -> Result<(), Failure> {
-    write_bytes_atomic(path, bytes).map_err(|error| Failure { error, details })
-}
-
-fn path_details(key: &str, path: &Path) -> Value {
-    json!({ key: path.display().to_string() })
 }
 
 fn random_bytes(len: usize) -> Result<Vec<u8>> {

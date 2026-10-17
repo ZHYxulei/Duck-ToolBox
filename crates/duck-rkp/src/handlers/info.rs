@@ -10,7 +10,6 @@ use super::resolve_runtime;
 pub(crate) struct InfoData {
     mode: String,
     curve: String,
-    seed_hex: String,
     public_key_hex: String,
     ed25519_pubkey_hex: String,
     device: DeviceInfo,
@@ -29,7 +28,6 @@ pub(crate) fn run(paths: &AppPaths, args: &SharedRunArgs) -> Result<InfoData> {
     Ok(InfoData {
         mode: profile.key_source.mode_label().into(),
         curve: profile.curve.as_str().into(),
-        seed_hex: keys.seed_hex(),
         ed25519_pubkey_hex: public_key_hex.clone(),
         public_key_hex,
         device: profile.device.clone(),

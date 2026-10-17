@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::{Context, Result, anyhow};
 use ciborium::{ser::into_writer, value::Value};
 
-use crate::cbor::{as_bytes, as_i128, as_map, as_text, encode, map_get};
+use crate::cbor::{as_bytes, as_i128, as_text, encode, map_get};
 
 use super::MAX_CHALLENGE_LEN;
 
@@ -16,14 +16,6 @@ pub(super) fn ensure_array_len(items: &[Value], expected: usize, label: &str) ->
         "{label} must contain {expected} entries, got {}",
         items.len()
     ))
-}
-
-pub(super) fn ensure_empty_map(value: &Value, label: &str) -> Result<()> {
-    if as_map(value, label)?.is_empty() {
-        return Ok(());
-    }
-
-    Err(anyhow!("{label} must be an empty map"))
 }
 
 pub(super) fn ensure_unique_integer_keys(entries: &[(Value, Value)], label: &str) -> Result<()> {

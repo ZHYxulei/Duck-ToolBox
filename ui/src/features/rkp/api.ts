@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { duckd } from "@/core/duckd"
+import { DuckError, duckd } from "@/core/duckd"
 
 const deviceSchema = z.object({
   brand: z.string(),
@@ -54,7 +54,6 @@ const detectSchema = z.object({ profile: profileSchema })
 const infoSchema = z.object({
   mode: z.string(),
   curve: z.string(),
-  seed_hex: z.string(),
   public_key_hex: z.string(),
   output_path: z.string(),
 })
@@ -93,7 +92,6 @@ export type Provision = z.infer<typeof provisionSchema>
 const keyboxSchema = z.object({
   csr_path: z.string(),
   keybox_path: z.string(),
-  keybox_xml: z.string(),
   device_id: z.string(),
   chain_summary: chainSummarySchema,
 })
@@ -102,6 +100,73 @@ export type Keybox = z.infer<typeof keyboxSchema>
 const verifySchema = z.object({ path: z.string(), report: reportSchema })
 export type Verify = z.infer<typeof verifySchema>
 
+export interface ImportDraft {
+  mode: "bundle" | "split"
+  bundlePath: string
+  chainPath: string
+  signingPath: string
+  configPath: string
+}
+
+const materialSchema = z.object({
+  material_type: z.string(),
+  algorithm: z.string(),
+  dice_entries: z.number(),
+  chain_signatures_valid: z.literal(true),
+  key_matches: z.literal(true),
+  source_trust: z.literal("unverified"),
+})
+const importedValidationSchema = z.object({
+  stage: z.literal("validated"),
+  material: materialSchema,
+  ready_for_issuance: z.boolean(),
+})
+const importedDiagnosticSchema = z.object({
+  stage: z.literal("diagnostic"),
+  material: materialSchema,
+  csr_path: z.string(),
+  local_verify: reportSchema,
+  diagnostic_only: z.literal(true),
+})
+const importedIssueSchema = z.object({
+  stage: z.literal("exported"),
+  material: materialSchema,
+  csr_path: z.string(),
+  keybox_path: z.string(),
+  device_id: z.string(),
+  chain_summary: chainSummarySchema,
+  local_verify: reportSchema,
+  server_accepted: z.literal(true),
+  certificates_verified: z.literal(true),
+  keybox_exported: z.literal(true),
+})
+export type ImportedValidation = z.infer<typeof importedValidationSchema>
+export type ImportedDiagnostic = z.infer<typeof importedDiagnosticSchema>
+export type ImportedIssue = z.infer<typeof importedIssueSchema>
+export type ImportResult = ImportedValidation | ImportedDiagnostic | ImportedIssue
+
+export function hasImportFiles(input: ImportDraft): boolean {
+  return input.mode === "bundle"
+    ? !!input.bundlePath.trim()
+    : !!input.chainPath.trim() && !!input.signingPath.trim()
+}
+
+function importArgs(action: string, input: ImportDraft): string[] {
+  if (!hasImportFiles(input)) {
+    throw new DuckError(
+      "invalid_material_input",
+      "material file paths are incomplete",
+      "rkp.import",
+    )
+  }
+  const source =
+    input.mode === "bundle"
+      ? ["--bundle", input.bundlePath.trim()]
+      : ["--chain", input.chainPath.trim(), "--signing", input.signingPath.trim()]
+  const config = input.configPath.trim() ? ["--config", input.configPath.trim()] : []
+  return ["rkp", "import", action, ...source, ...config]
+}
+
 export const rkpApi = {
   show: () => duckd(["rkp", "profile", "show"], { schema: profileEnvelopeSchema }),
   save: (profile: Profile) =>
@@ -109,7 +174,14 @@ export const rkpApi = {
   clear: () => duckd(["rkp", "profile", "clear"]),
   detect: () => duckd(["rkp", "profile", "detect"], { schema: detectSchema }),
   info: () => duckd(["rkp", "info"], { schema: infoSchema }),
-  provision: () => duckd(["rkp", "provision"], { schema: provisionSchema }),
+  provision: (offline = false) =>
+    duckd(["rkp", "provision", ...(offline ? ["--offline"] : [])], { schema: provisionSchema }),
   keybox: () => duckd(["rkp", "keybox"], { schema: keyboxSchema }),
   verify: (path: string) => duckd(["rkp", "verify", path], { schema: verifySchema }),
+  importValidate: async (input: ImportDraft) =>
+    duckd(importArgs("validate", input), { schema: importedValidationSchema }),
+  importDiagnose: async (input: ImportDraft) =>
+    duckd(importArgs("diagnose", input), { schema: importedDiagnosticSchema }),
+  importIssue: async (input: ImportDraft) =>
+    duckd(importArgs("issue", input), { schema: importedIssueSchema }),
 }

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### RKP Workbench
+
+- Add **Import DICE materials** as the main workbench entry, with separate offline
+  validation, diagnostic CSR construction and online issuance commands. An existing CSR
+  is not required; device collection and firmware patching are not implemented here.
+- Preserve the imported chain, match explicit signing material to its leaf key, and
+  construct a new CSR v3 using a fresh server challenge and newly generated attestation key.
+- Share issuance and export between imported material and the labelled experimental
+  degenerate-chain mode. Remove implicit offline fallback and successful error results.
+- Select returned chains by public key, verify certificate signatures and constraints,
+  and publish private keyboxes atomically after XML readback checks. JSON results contain
+  paths and summaries instead of private XML. Installation remains independent.
+- Bump the workbench feature contract to 2. Old profiles retain their seed derivation;
+  material import does not overwrite profiles or an installed keybox.
+- Verification uses generated synthetic keys and a local simulated server. Real-material
+  production acceptance and successful production export remain unverified for this path.
+
 ### Device RKP Issuer
 - Automatic mode tries V2, AIDL V1 and native V1 in order, skipping unavailable methods.
   Any issuance or validation failure advances to the next method with a fresh challenge;

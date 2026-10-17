@@ -7,7 +7,7 @@ pub static FEATURE: ClapFeature<Command> = ClapFeature::new(
     FeatureInfo {
         id: "rkp",
         summary: "Remote Key Provisioning workbench",
-        contract: 1,
+        contract: 2,
     },
     dispatch,
 );
@@ -18,19 +18,49 @@ fn dispatch<'a>(command: Command, ctx: &'a Context) -> BoxFuture<'a, CommandResu
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// import an existing DICE chain and explicit signing material (no device collection)
+    Import {
+        #[command(subcommand)]
+        command: ImportCommand,
+    },
     /// Show, save or clear the saved RKP profile.
     Profile {
         #[command(subcommand)]
         command: ProfileCommand,
     },
-    /// Print the derived DICE key and effective settings.
+    /// print the experimental DICE public key and effective settings without secrets
     Info(InfoArgs),
-    /// Build a CSR, verify it locally and submit it to the RKP server.
+    /// experimental degenerate-chain provisioning; use --offline for diagnosis only
     Provision(ProvisionArgs),
-    /// Provision one key and export the certificate chain as `keybox.xml`.
+    /// experimental degenerate-chain keybox issuance
     Keybox(KeyboxArgs),
     /// Verify a CSR file offline.
     Verify(VerifyArgs),
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ImportCommand {
+    /// parse, verify the DICE chain and match signing material, entirely offline
+    Validate(ImportArgs),
+    /// build a fresh diagnostic CSR without contacting a server
+    Diagnose(ImportArgs),
+    /// request fresh certificates and export a verified keybox without installing it
+    Issue(ImportArgs),
+}
+
+#[derive(Debug, Args, Clone)]
+pub struct ImportArgs {
+    /// versioned JSON material bundle. Contents never belong in command-line arguments
+    #[arg(long, conflicts_with_all = ["chain", "signing"])]
+    pub bundle: Option<String>,
+    /// raw CBOR DICE chain; requires a separate signing JSON file
+    #[arg(long, requires = "signing", conflicts_with = "bundle")]
+    pub chain: Option<String>,
+    #[arg(long, requires = "chain", conflicts_with = "bundle")]
+    pub signing: Option<String>,
+    /// optional JSON device/issuance configuration
+    #[arg(long)]
+    pub config: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]
@@ -85,6 +115,9 @@ pub struct ProvisionArgs {
     pub shared: SharedRunArgs,
     #[arg(long = "num-keys")]
     pub num_keys: Option<u32>,
+    /// explicit diagnostic mode: creates no certificates and makes no network requests
+    #[arg(long)]
+    pub offline: bool,
 }
 
 #[derive(Debug, Args, Clone)]
@@ -103,6 +136,26 @@ pub struct VerifyArgs {
 pub async fn run(command: Command, ctx: &Context) -> CommandResult {
     let paths = &ctx.paths;
     match command {
+        Command::Import { command } => {
+            let (args, operation, label) = match command {
+                ImportCommand::Validate(args) => (
+                    args,
+                    handlers::import::Operation::Validate,
+                    "rkp.import.validate",
+                ),
+                ImportCommand::Diagnose(args) => (
+                    args,
+                    handlers::import::Operation::Diagnose,
+                    "rkp.import.diagnose",
+                ),
+                ImportCommand::Issue(args) => {
+                    (args, handlers::import::Operation::Issue, "rkp.import.issue")
+                }
+            };
+            handlers::import::run(paths, &args, operation)
+                .await
+                .into_command(label, code_of)
+        }
         Command::Profile { command } => match command {
             ProfileCommand::Show(args) => {
                 handlers::profile::show(paths, &args).into_command("rkp.profile.show", code_of)

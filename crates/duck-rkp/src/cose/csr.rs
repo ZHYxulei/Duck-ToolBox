@@ -20,6 +20,31 @@ pub struct CsrBundle {
     pub protected_data_len: usize,
 }
 
+/// constructs the experimental degenerate-chain CSR without legacy EEK encryption
+pub fn build_experimental_csr_v3(
+    keys: &DeviceKeys,
+    challenge: &[u8],
+    keys_to_sign: &[Value],
+    device_info: &DeviceInfo,
+) -> Result<Vec<u8>> {
+    let csr_payload = encode(&Value::Array(vec![
+        int(3),
+        text("keymint"),
+        device_info_to_cbor(device_info)?,
+        Value::Array(keys_to_sign.to_vec()),
+    ]))?;
+    let signed = cose_sign1(
+        keys,
+        encode(&Value::Array(vec![bytes(challenge), bytes(csr_payload)]))?,
+    )?;
+    encode(&Value::Array(vec![
+        int(1),
+        empty_map(),
+        build_dice_chain(keys, device_info)?,
+        signed,
+    ]))
+}
+
 pub fn build_csr(
     keys: &DeviceKeys,
     challenge: &[u8],

@@ -14,8 +14,6 @@ pub fn validate_device_info_for_request(device: &DeviceInfo) -> Result<()> {
         ("vb_state", device.vb_state.as_str()),
         ("security_level", device.security_level.as_str()),
         ("bootloader_state", device.bootloader_state.as_str()),
-        ("dice_issuer", device.dice_issuer.as_str()),
-        ("dice_subject", device.dice_subject.as_str()),
     ] {
         if value.trim().is_empty() {
             return Err(RkpError::MissingDeviceField(field).into());

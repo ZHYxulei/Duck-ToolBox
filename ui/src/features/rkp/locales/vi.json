@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "Bàn làm việc RKP",
-    "description": "Tạo yêu cầu Cấp phát khóa từ xa (RKP), lấy chứng chỉ, xuất keybox.xml và xác minh CSR."
+    "description": "Nhập chuỗi DICE hiện có và vật liệu ký tương ứng. Không cần chuẩn bị CSR trước."
   },
   "tabs": {
     "profile": "Hồ sơ",
     "provision": "Yêu cầu",
     "keybox": "Keybox",
-    "verify": "Xác minh"
+    "verify": "Chẩn đoán CSR",
+    "import": "Nhập DICE"
   },
   "profile": {
     "keySource": "Dữ liệu khóa",
@@ -82,7 +83,7 @@
     "invalid": "Không hợp lệ",
     "protectedData": "Dữ liệu được bảo vệ",
     "bytes": "{count} byte",
-    "localTestMode": "Không kết nối được với máy chủ; CSR được tạo bằng EEK thử nghiệm cục bộ.",
+    "localTestMode": "Chế độ chẩn đoán ngoại tuyến; chưa gửi yêu cầu chứng chỉ.",
     "fetchEekError": "Không lấy được EEK",
     "submitError": "Không gửi được đến máy chủ",
     "chains": "Chuỗi chứng chỉ",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "Phản hồi của máy chủ RKP không hợp lệ.",
     "device_not_registered": "Máy chủ RKP không nhận ra thiết bị này.",
     "rkp_client_error": "Máy chủ RKP đã từ chối yêu cầu.",
-    "rkp_server_error": "Máy chủ RKP gặp lỗi."
+    "rkp_server_error": "Máy chủ RKP gặp lỗi.",
+    "invalid_material_input": "Điền đầy đủ đường dẫn tệp vật liệu.",
+    "material_structure": "Cấu trúc vật liệu nhập không hợp lệ.",
+    "material_chain_invalid": "Chuỗi DICE hoặc bằng chứng UDS không hợp lệ.",
+    "material_unsupported": "Vật liệu ký hoặc cách dẫn xuất không được hỗ trợ.",
+    "material_key_mismatch": "Khóa ký không khớp khóa lá DICE.",
+    "material_ambiguous_match": "Nhiều cách dẫn xuất cùng khớp. Hãy chỉ định rõ cách dùng.",
+    "material_configuration": "Cấu hình yêu cầu không hợp lệ hoặc xung đột với gói.",
+    "challenge_unavailable": "Không lấy được thử thách. Chưa gửi yêu cầu chứng chỉ.",
+    "submission_unknown": "Chưa rõ kết quả gửi. Không tự động thử lại.",
+    "invalid_endpoint": "Địa chỉ máy chủ không hợp lệ. Hãy dùng HTTPS.",
+    "certificate_validation_failed": "Máy chủ đã phản hồi nhưng xác minh chứng chỉ thất bại. Chưa xuất keybox."
+  },
+  "import": {
+    "title": "Nhập vật liệu DICE",
+    "workflow": "Nhập → Xác minh → Cấu hình → Yêu cầu trực tuyến → Xuất",
+    "description": "Nhập chuỗi DICE hiện có và vật liệu ký tương ứng. Không cần chuẩn bị CSR trước.",
+    "bundle": "Gói vật liệu DICE (JSON)",
+    "split": "Tệp chuỗi và tệp ký riêng",
+    "bundlePath": "Đường dẫn tệp gói",
+    "chainPath": "Tệp chuỗi DICE (CBOR thô)",
+    "signingPath": "Tệp vật liệu ký (JSON)",
+    "configPath": "Tệp cấu hình yêu cầu (JSON, tùy chọn)",
+    "configHint": "Đặt DeviceInfo, dấu vân tay và máy chủ trong tệp cấu hình. Không cần thu thập dữ liệu thiết bị qua root hay phần cứng Qualcomm.",
+    "fileHint": "Chỉ đường dẫn tệp được chuyển đến phía xử lý. Trình duyệt không đọc hoặc lưu lâu dài nội dung vật liệu.",
+    "validate": "Xác minh vật liệu",
+    "diagnose": "Tạo CSR chẩn đoán (ngoại tuyến)",
+    "issue": "Yêu cầu trực tuyến và xuất keybox",
+    "busy": "Đang xử lý. Hãy đợi trước khi thay đổi tệp.",
+    "materialType": "Loại vật liệu",
+    "algorithm": "Thuật toán ký",
+    "entries": "Mục DICE",
+    "chain": "Chữ ký chuỗi",
+    "key": "Khóa ký khớp",
+    "trust": "Độ tin cậy nguồn",
+    "unverified": "Chưa xác minh",
+    "trustHint": "Kiểm tra chuỗi và khóa cục bộ không chứng minh nguồn gốc phần cứng, đăng ký thiết bị hay việc máy chủ chấp nhận.",
+    "ready": "Xác minh thành công; có thể yêu cầu trực tuyến.",
+    "configRequired": "Đã xác minh vật liệu. Hoàn tất cấu hình yêu cầu và xác minh lại.",
+    "diagnostic": "Chỉ chẩn đoán: đã tạo ngoại tuyến; chưa gửi yêu cầu chứng chỉ.",
+    "exported": "Máy chủ đã chấp nhận yêu cầu. Chứng chỉ đã được xác minh và keybox đã được xuất.",
+    "result": "Tệp kết quả",
+    "server": "Máy chủ chấp nhận",
+    "certificates": "Xác minh chứng chỉ"
+  },
+  "experimental": {
+    "title": "Chế độ thử nghiệm",
+    "description": "Quy trình Seed/KDF tạo danh tính DICE bằng phần mềm. Không nhập chuỗi thiết bị hay chứng minh đăng ký máy chủ. Dùng thẻ nhập cho vật liệu hiện có."
   }
 }

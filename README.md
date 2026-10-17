@@ -29,11 +29,21 @@ changed, removed or added on its own.
   - Optionally, a WebUI entry on the keystore module itself, and the TSupport-Advance
     auto-target stop flag.
 - **RKP Workbench**: Remote Key Provisioning.
-  - Builds `AuthenticatedRequest` CSRs (DICE + COSE, per the AOSP
-    `IRemotelyProvisionedComponent` HAL) and talks to the RKP server.
-  - Verifies CSRs offline and exports `keybox.xml`, which the Tricky Store manager can
-    install directly.
-  - Device values are read from AOSP build properties.
+  - **Import DICE materials** accepts an existing CBOR DICE chain and explicitly typed
+    signing material. No existing CSR, Qualcomm interface or device collection is required.
+  - Verifies the chain and leaf-key match locally, constructs a fresh CSR v3 with the
+    imported chain, obtains a new server challenge, and exports a keybox only after the
+    returned certificates match the newly generated private key and pass local checks.
+  - Offline validation and diagnostic CSR construction are separate from online issuance.
+    Network failures do not trigger a local fallback or an automatic signing retry.
+  - The older seed/profile workflow remains an explicitly labelled **experimental
+    degenerate-chain mode**. Its saved seed semantics are unchanged. Import mode requires
+    explicit device and issuance configuration and never falls back to experimental mode.
+  - Private output uses owner-only permissions, atomic publication and readback checks;
+    installation through the Tricky Store manager remains a separate action.
+  - See [input formats, supported combinations and verification limits](docs/rkp-materials.md).
+    Synthetic server tests cover the local flow; real-material server acceptance and a
+    successful production keybox export have **not** been verified for the import path.
 - **Device RKP Issuer**: the same keybox export, but signed by the device itself instead of
   a seed you hold.
   - Asks this device's Qualcomm KeyMint TA for a `CSR_V2` over a P-256 key we generated,

@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "RKP Workbench",
-    "description": "Build Remote Key Provisioning requests, fetch certificates, export keybox.xml and verify CSRs."
+    "description": "Import an existing DICE chain and its matching signing material. A CSR is not required."
   },
   "tabs": {
     "profile": "Profile",
     "provision": "Request",
     "keybox": "Keybox",
-    "verify": "Verify"
+    "verify": "CSR diagnostics",
+    "import": "Import DICE"
   },
   "profile": {
     "keySource": "Key material",
@@ -82,7 +83,7 @@
     "invalid": "Invalid",
     "protectedData": "Protected data",
     "bytes": "{count} bytes",
-    "localTestMode": "The server was unreachable; the CSR was built against a local test EEK.",
+    "localTestMode": "Offline diagnostic mode; no certificate request was sent.",
     "fetchEekError": "Fetching the EEK failed",
     "submitError": "Submitting to the server failed",
     "chains": "Certificate chains",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "The RKP server response is invalid.",
     "device_not_registered": "The RKP server does not recognise this device.",
     "rkp_client_error": "The RKP server rejected the request.",
-    "rkp_server_error": "The RKP server failed."
+    "rkp_server_error": "The RKP server failed.",
+    "invalid_material_input": "Complete the material file paths.",
+    "material_structure": "The imported material structure is invalid.",
+    "material_chain_invalid": "The DICE chain or UDS evidence is invalid.",
+    "material_unsupported": "The signing material or derivation is unsupported.",
+    "material_key_mismatch": "The signing key does not match the DICE leaf.",
+    "material_ambiguous_match": "More than one signing derivation matches. Specify the derivation explicitly.",
+    "material_configuration": "The imported request configuration is invalid or conflicts with the bundle.",
+    "challenge_unavailable": "Could not obtain a challenge. No certificate request was submitted.",
+    "submission_unknown": "The submission outcome is unknown. Do not retry automatically.",
+    "invalid_endpoint": "Invalid server address. Use HTTPS.",
+    "certificate_validation_failed": "The server responded, but certificate validation failed. No keybox was exported."
+  },
+  "import": {
+    "title": "Import DICE material",
+    "workflow": "Import → Validate → Configure → Request online → Export",
+    "description": "Import an existing DICE chain and its matching signing material. A CSR is not required.",
+    "bundle": "DICE material bundle (JSON)",
+    "split": "Separate chain and signing files",
+    "bundlePath": "Bundle file path",
+    "chainPath": "DICE chain file (raw CBOR)",
+    "signingPath": "Signing material file (JSON)",
+    "configPath": "Request configuration file (JSON, optional)",
+    "configHint": "Set DeviceInfo, fingerprint and server values in the configuration file. Imported material does not require root-based device collection or Qualcomm hardware.",
+    "fileHint": "Only file paths are passed to the backend. The browser does not read or persist material contents.",
+    "validate": "Validate material",
+    "diagnose": "Build diagnostic CSR (offline)",
+    "issue": "Request online and export keybox",
+    "busy": "Operation in progress. Wait before changing files.",
+    "materialType": "Material type",
+    "algorithm": "Signing algorithm",
+    "entries": "DICE entries",
+    "chain": "Chain signatures",
+    "key": "Signing key matches",
+    "trust": "Source trust",
+    "unverified": "Unverified",
+    "trustHint": "Local chain and key checks do not prove hardware origin, device enrollment or server acceptance.",
+    "ready": "Validation passed; ready for an online request.",
+    "configRequired": "Material validated. Complete the request configuration and validate again.",
+    "diagnostic": "Diagnostic only: generated offline; no certificate request was sent.",
+    "exported": "The server accepted the request. Certificates were verified and the keybox was exported.",
+    "result": "Result files",
+    "server": "Server acceptance",
+    "certificates": "Certificate verification"
+  },
+  "experimental": {
+    "title": "Experimental mode",
+    "description": "The existing seed/KDF workflow creates a software DICE identity. It does not import a device chain or prove server enrollment. Use the import tab for existing DICE material."
   }
 }

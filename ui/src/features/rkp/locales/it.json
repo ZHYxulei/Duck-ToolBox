@@ -1,13 +1,14 @@
 {
   "meta": {
     "title": "Banco di lavoro RKP",
-    "description": "Crea richieste di Remote Key Provisioning, ottieni certificati, esporta keybox.xml e verifica le CSR."
+    "description": "Importa una catena DICE esistente e il relativo materiale di firma. Non serve un CSR già pronto."
   },
   "tabs": {
     "profile": "Profilo",
     "provision": "Richiesta",
     "keybox": "Keybox",
-    "verify": "Verifica"
+    "verify": "Diagnostica CSR",
+    "import": "Importa DICE"
   },
   "profile": {
     "keySource": "Materiale della chiave",
@@ -82,7 +83,7 @@
     "invalid": "Non valida",
     "protectedData": "Dati protetti",
     "bytes": "{count} byte",
-    "localTestMode": "Server non raggiungibile: la CSR è stata creata con una EEK di test locale.",
+    "localTestMode": "Modalità diagnostica offline; nessuna richiesta di certificato inviata.",
     "fetchEekError": "Recupero della EEK non riuscito",
     "submitError": "Invio al server non riuscito",
     "chains": "Catene di certificati",
@@ -130,6 +131,53 @@
     "invalid_rkp_response": "La risposta del server RKP non è valida.",
     "device_not_registered": "Il server RKP non riconosce questo dispositivo.",
     "rkp_client_error": "Il server RKP ha rifiutato la richiesta.",
-    "rkp_server_error": "Errore del server RKP."
+    "rkp_server_error": "Errore del server RKP.",
+    "invalid_material_input": "Completa i percorsi dei file.",
+    "material_structure": "La struttura del materiale importato non è valida.",
+    "material_chain_invalid": "La catena DICE o la prova UDS non è valida.",
+    "material_unsupported": "Materiale di firma o derivazione non supportati.",
+    "material_key_mismatch": "La chiave di firma non corrisponde alla foglia DICE.",
+    "material_ambiguous_match": "Corrispondono più derivazioni. Specifica quella da usare.",
+    "material_configuration": "La configurazione non è valida o è in conflitto con il pacchetto.",
+    "challenge_unavailable": "Impossibile ottenere la challenge. Nessuna richiesta di certificato è stata inviata.",
+    "submission_unknown": "L’esito dell’invio è sconosciuto. Non riprovare automaticamente.",
+    "invalid_endpoint": "Indirizzo del server non valido. Usa HTTPS.",
+    "certificate_validation_failed": "Il server ha risposto, ma la verifica del certificato non è riuscita. Nessun keybox è stato esportato."
+  },
+  "import": {
+    "title": "Importa materiale DICE",
+    "workflow": "Importa → Verifica → Configura → Richiedi online → Esporta",
+    "description": "Importa una catena DICE esistente e il relativo materiale di firma. Non serve un CSR già pronto.",
+    "bundle": "Pacchetto di materiale DICE (JSON)",
+    "split": "File separati per catena e firma",
+    "bundlePath": "Percorso del pacchetto",
+    "chainPath": "Catena DICE (CBOR grezzo)",
+    "signingPath": "Materiale di firma (JSON)",
+    "configPath": "Configurazione richiesta (JSON, facoltativa)",
+    "configHint": "Specifica DeviceInfo, impronta e server nel file di configurazione. Non servono acquisizione dal dispositivo tramite root o hardware Qualcomm.",
+    "fileHint": "Al backend vengono passati solo i percorsi. Il browser non legge né conserva il contenuto del materiale.",
+    "validate": "Verifica materiale",
+    "diagnose": "Crea CSR diagnostico (offline)",
+    "issue": "Richiedi online ed esporta keybox",
+    "busy": "Operazione in corso. Attendi prima di cambiare i file.",
+    "materialType": "Tipo di materiale",
+    "algorithm": "Algoritmo di firma",
+    "entries": "Voci DICE",
+    "chain": "Firme della catena",
+    "key": "Chiave di firma corrispondente",
+    "trust": "Attendibilità della fonte",
+    "unverified": "Non verificata",
+    "trustHint": "I controlli locali di catena e chiave non provano origine hardware, registrazione del dispositivo o accettazione del server.",
+    "ready": "Verifica riuscita; pronto per la richiesta online.",
+    "configRequired": "Materiale verificato. Completa la configurazione e ripeti la verifica.",
+    "diagnostic": "Solo diagnostica: generato offline; nessuna richiesta di certificato inviata.",
+    "exported": "Il server ha accettato la richiesta. Certificati verificati e keybox esportato.",
+    "result": "File risultanti",
+    "server": "Accettazione del server",
+    "certificates": "Verifica dei certificati"
+  },
+  "experimental": {
+    "title": "Modalità sperimentale",
+    "description": "Il flusso Seed/KDF crea un’identità DICE software. Non importa una catena del dispositivo e non dimostra la registrazione sul server. Usa Importa per il materiale esistente."
   }
 }
