@@ -1,6 +1,7 @@
 //! Device-backed RKP provisioning. Vendor ABI access, TA framing, provisioning and
 //! artifact ownership stay inside this feature; RKP protocol primitives come from duck-rkp.
 
+mod aidl_check;
 mod artifacts;
 mod cli;
 mod error;

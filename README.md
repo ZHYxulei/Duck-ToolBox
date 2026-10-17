@@ -256,6 +256,14 @@ The WebUI accepts device file paths (up to 256 KiB) or binary files from the sys
 `csr` in the same file format, `derivation`, and an optional raw `offset`. CLI input options
 and JSON requests are separate modes; put all operation options in the JSON request.
 
+`duckd rkp-device check-aidl-v2 [--instance default]` checks the standard AIDL V2
+interface independently of issuance. It requests two CSRs with no keys to certify, using
+an empty challenge and a random 32-byte challenge, and verifies their signatures and
+challenge binding locally. The report excludes raw CSRs and device unique identifiers.
+It does not generate keys, contact a server or establish server acceptance. Temporary
+bridge files are private and removed when the command exits normally. Older hardware
+without V2 support reports `unsupported_protocol`; existing issuance methods are unchanged.
+
 ## Building and testing
 
 Requirements:

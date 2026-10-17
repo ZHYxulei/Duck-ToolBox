@@ -76,8 +76,10 @@ jobs:
         uses: android-actions/setup-android@v4.0.4
         with:
           packages: 'build-tools;36.0.0'
-      - name: Test the V1 bridge against a host AIDL fixture
-        run: python3 scripts/test_rkp_v1_bridge.py
+      - name: Test the AIDL bridges against host fixtures
+        run: |
+          python3 scripts/test_rkp_v1_bridge.py
+          python3 scripts/test_rkp_v2_check.py
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
         id: setup-ndk

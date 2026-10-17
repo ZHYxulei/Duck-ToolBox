@@ -2,6 +2,7 @@ use std::{env, fs, path::PathBuf, process::Command};
 
 fn main() {
     println!("cargo:rerun-if-changed=bridge/RkpV1Bridge.java");
+    println!("cargo:rerun-if-changed=bridge/RkpV2Check.java");
     for name in [
         "ANDROID_HOME",
         "ANDROID_SDK_ROOT",
@@ -47,7 +48,7 @@ fn main() {
     run(Command::new(java_tool("javac"))
         .args(["--release", "8", "-encoding", "UTF-8", "-d"])
         .arg(&classes)
-        .arg("bridge/RkpV1Bridge.java"));
+        .args(["bridge/RkpV1Bridge.java", "bridge/RkpV2Check.java"]));
     run(Command::new(java_tool("java"))
         .arg("-cp")
         .arg(&d8)
@@ -60,7 +61,8 @@ fn main() {
             "--output",
         ])
         .arg(out.join("rkp-v1.jar"))
-        .arg(classes.join("duck/rkp/RkpV1Bridge.class")));
+        .arg(classes.join("duck/rkp/RkpV1Bridge.class"))
+        .arg(classes.join("duck/rkp/RkpV2Check.class")));
 }
 
 fn run(command: &mut Command) {

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::Subcommand;
 use duck_core::{BoxFuture, ClapFeature, CommandResult, Context, FeatureInfo, IntoCommandResult};
 
-use crate::{error::code_of, issuance::Protocol, service, status, worker};
+use crate::{aidl_check, error::code_of, issuance::Protocol, service, status, worker};
 
 pub static FEATURE: ClapFeature<Command> = ClapFeature::new(
     FeatureInfo {
@@ -18,6 +18,11 @@ pub static FEATURE: ClapFeature<Command> = ClapFeature::new(
 pub enum Command {
     /// Check prerequisites without sending commands to KeyMint or contacting a server.
     Status,
+    /// Check standard AIDL V2 with two empty-key CSRs; no keys are generated or provisioned.
+    CheckAidlV2 {
+        #[arg(long, default_value = "default", value_parser = aidl_check::parse_instance)]
+        instance: String,
+    },
     /// Issue one RKP ECDSA keybox using this device's KeyMint TA (compatible firmware only).
     Provision {
         /// Auto tries V2, AIDL V1, then native V1 until one completes successfully.
@@ -50,6 +55,9 @@ fn dispatch<'a>(command: Command, ctx: &'a Context) -> BoxFuture<'a, CommandResu
             Command::Status => {
                 let status: anyhow::Result<status::DeviceStatus> = Ok(status::detect(ctx));
                 status.into_command("rkp-device.status", code_of)
+            }
+            Command::CheckAidlV2 { instance } => {
+                aidl_check::run(ctx, &instance).into_command("rkp-device.check-aidl-v2", code_of)
             }
             Command::Provision {
                 protocol,
