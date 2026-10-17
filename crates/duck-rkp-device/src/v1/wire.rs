@@ -43,7 +43,7 @@ pub(super) fn decode_response(bytes: &[u8]) -> Result<Response> {
             return Err(anyhow::Error::new(DeviceRkpError::Rejected(code))
                 .context(format!("V1 AIDL: {message}")));
         }
-        2 | 3 | 4 => {
+        2..=4 => {
             let message = String::from_utf8(read_field(&mut input)?)?;
             ensure_end(&input)?;
             let message = format!("V1 AIDL: {message}");
