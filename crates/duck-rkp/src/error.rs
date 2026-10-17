@@ -79,7 +79,11 @@ pub fn code_of(error: &anyhow::Error) -> &'static str {
         return code;
     }
     error
-        .chain()
-        .find_map(|cause| cause.downcast_ref::<RkpError>())
+        .downcast_ref::<RkpError>()
+        .or_else(|| {
+            error
+                .chain()
+                .find_map(|cause| cause.downcast_ref::<RkpError>())
+        })
         .map_or("internal_error", RkpError::code)
 }

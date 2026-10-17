@@ -11,8 +11,8 @@ use crate::{
 };
 
 mod transport;
-use transport::read_body;
 pub use transport::{fetch_challenge, rkp_client, validate_endpoint};
+use transport::{read_body, rpc_url};
 
 pub const RKP_SERVER_URL: &str = "https://remoteprovisioning.googleapis.com/v1";
 
@@ -58,7 +58,7 @@ pub async fn fetch_eek(
     fingerprint: &str,
     server_url: &str,
 ) -> Result<EekResponse> {
-    let url = format!("{server_url}:fetchEekChain");
+    let url = rpc_url(server_url, "fetchEekChain")?;
     let payload = encode(&Value::Map(vec![
         (
             Value::Text("fingerprint".into()),
@@ -91,10 +91,9 @@ pub async fn submit_csr(
     challenge: &[u8],
     server_url: &str,
 ) -> Result<Vec<Vec<u8>>> {
-    let url = format!(
-        "{server_url}:signCertificates?challenge={}",
-        Base64Url::encode_string(challenge)
-    );
+    let mut url = rpc_url(server_url, "signCertificates")?;
+    url.query_pairs_mut()
+        .append_pair("challenge", &Base64Url::encode_string(challenge));
 
     let response = client
         .post(url)
@@ -110,9 +109,11 @@ pub async fn submit_csr(
         return Err(map_http_error(status, &[]).into());
     }
 
-    let body = read_body(response, true).await?;
+    let body = read_body(response, true)
+        .await
+        .context(RkpError::SubmissionUnknown)?;
 
-    parse_sign_certificates_response(&body)
+    parse_sign_certificates_response(&body).context(RkpError::SubmissionUnknown)
 }
 
 fn map_http_error(status: StatusCode, _body: &[u8]) -> RkpError {
@@ -337,7 +338,19 @@ fn parse_challenge_response(body: &[u8]) -> Result<Vec<u8>> {
 }
 
 fn parse_sign_certificates_response(body: &[u8]) -> Result<Vec<Vec<u8>>> {
-    let value = invalid_rkp_response(decode(body))?;
+    let value = decode(body).map_err(|error| {
+        let reason = error.to_string();
+        // only fixed diagnostics are safe because CBOR map errors can include response keys
+        let safe_reason = match reason.as_str() {
+            "truncated CBOR"
+            | "truncated CBOR string"
+            | "trailing data after CBOR item"
+            | "CBOR nesting exceeds 16 levels"
+            | "CBOR container exceeds 64 entries" => reason,
+            _ => "malformed CBOR".into(),
+        };
+        RkpError::InvalidRkpResponse(safe_reason)
+    })?;
     let top = invalid_rkp_response(as_array(&value, "signCertificates response"))?;
     if top.is_empty() {
         return Err(
@@ -396,3 +409,5 @@ fn invalid_rkp_response<T>(result: Result<T>) -> Result<T> {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod transport_tests;

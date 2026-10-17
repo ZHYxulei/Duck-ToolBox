@@ -15,7 +15,7 @@ use super::{
         DeviceInfo, DiceCurve, FingerprintConfig, KeySource, ProfileData, default_num_keys,
         default_output_path, default_server_url,
     },
-    normalize::normalize_profile,
+    normalize::{normalize_diagnostic_profile, normalize_profile},
 };
 
 #[derive(Debug, Clone, Default)]
@@ -128,9 +128,24 @@ pub fn clear_profile(paths: &AppPaths, profile_name: Option<&str>) -> Result<()>
 }
 
 pub fn resolve_profile(paths: &AppPaths, overrides: &RunOverrides) -> Result<ResolvedProfile> {
+    resolve_profile_with(paths, overrides, normalize_profile)
+}
+
+pub(crate) fn resolve_diagnostic_profile(
+    paths: &AppPaths,
+    overrides: &RunOverrides,
+) -> Result<ResolvedProfile> {
+    resolve_profile_with(paths, overrides, normalize_diagnostic_profile)
+}
+
+fn resolve_profile_with(
+    paths: &AppPaths,
+    overrides: &RunOverrides,
+    normalize: fn(ProfileData) -> Result<ProfileData>,
+) -> Result<ResolvedProfile> {
     validate_profile_name(overrides.profile_name.as_deref())?;
 
-    let mut profile = normalize_profile(load_profile(paths)?)?;
+    let mut profile = normalize(load_profile(paths)?)?;
 
     if let Some(seed_hex) = overrides.seed_hex.clone() {
         profile.key_source = KeySource::Seed { seed_hex };
@@ -163,7 +178,7 @@ pub fn resolve_profile(paths: &AppPaths, overrides: &RunOverrides) -> Result<Res
         profile.output_path = output_path;
     }
 
-    profile = normalize_profile(profile)?;
+    profile = normalize(profile)?;
 
     let output_path = paths.resolve_in_root(&profile.output_path);
     Ok(ResolvedProfile {

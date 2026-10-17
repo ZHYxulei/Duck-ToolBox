@@ -34,9 +34,18 @@ pub(crate) async fn run(
         config.as_deref(),
     )?;
     if matches!(operation, Operation::Validate) {
+        let ready = material.device().is_some() && material.issuance().is_some();
+        if ready {
+            // the largest challenge and fixed-size P-256 key bound online request size
+            let public = [generate_ec_keypair()?.cose_public];
+            material
+                .build_csr(&[0; 64], &public)
+                .context("imported material cannot prepare a CSR for online issuance")
+                .context(material::MaterialError::Configuration)?;
+        }
         return Ok(json!({
             "stage": "validated", "material": material.report(),
-            "ready_for_issuance": material.device().is_some() && material.issuance().is_some(),
+            "ready_for_issuance": ready,
         }));
     }
     let device = material
@@ -83,3 +92,6 @@ pub(crate) async fn run(
         "certificates_verified":true, "keybox_exported":true,
     }))
 }
+
+#[cfg(test)]
+mod tests;

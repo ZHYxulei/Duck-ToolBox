@@ -88,11 +88,17 @@ file contains optional `device`, `issuance` and `uds_certs_hex` fields. A bundle
 use `--config` to supply missing sections; providing the same section in both places is
 a configuration conflict and never silently replaces material.
 
+Host-only server URLs use `/v1`; trailing slashes are removed before RPC methods are
+appended. HTTPS and endpoint safety checks still apply.
+
 Limits: 256 KiB per file, 2–32 DICE chain items (including the root), 16 nesting levels,
 64 entries per container. Input files must be regular files; Unix symlinks and special
 files are rejected. Imported DICE chain bytes, protected headers, signed payloads and
 signatures are preserved. Supported optional COSE metadata is validated; unsupported
 critical headers are rejected.
+The assembled CSR also has a 256 KiB limit. With complete configuration, validation
+builds a local request using the maximum supported challenge length before reporting
+issuance readiness; this preflight makes no network requests and saves no key material.
 
 ## Supported signing combinations
 
@@ -132,12 +138,17 @@ Network errors before signing submission, explicit HTTP rejection and an unknown
 submission outcome are errors. No automatic signing retry occurs. In particular, an
 unknown submission outcome may already have consumed server quota; inspect it before
 starting another online operation. Input or configuration changes clear UI results.
+An HTTP success response with an unreadable, oversized or malformed certificate result
+also has an unknown submission outcome and must not be retried automatically.
 
 Artifacts use new private run directories (0700) and files (0600). XML private-key,
 certificate order, counts and DeviceID are checked before and after atomic publication.
 Failures clean up temporary output and do not replace profiles or an installed keybox.
 The experimental profile commands remain available for compatibility:
 `rkp provision`, `rkp provision --offline`, `rkp keybox`; their old seed mapping is retained.
+Experimental offline diagnostics require signing material and device information, honor
+the requested key count within the supported range of 1–16, and do not require an online
+fingerprint or server endpoint.
 
 ## Verification status
 

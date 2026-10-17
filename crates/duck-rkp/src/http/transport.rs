@@ -12,7 +12,11 @@ use crate::{
 const MAX_RESPONSE: usize = 1024 * 1024;
 
 pub fn validate_endpoint(value: &str) -> Result<()> {
-    let url = Url::parse(value).map_err(|_| RkpError::InvalidEndpoint)?;
+    endpoint_url(value).map(|_| ())
+}
+
+fn endpoint_url(value: &str) -> Result<Url> {
+    let mut url = Url::parse(value).map_err(|_| RkpError::InvalidEndpoint)?;
     let loopback = matches!(url.host_str(), Some("127.0.0.1" | "[::1]" | "localhost"));
     ensure!(
         (url.scheme() == "https" || (url.scheme() == "http" && loopback))
@@ -22,7 +26,19 @@ pub fn validate_endpoint(value: &str) -> Result<()> {
             && url.fragment().is_none(),
         RkpError::InvalidEndpoint
     );
-    Ok(())
+    let path = match url.path().trim_end_matches('/') {
+        "" => "/v1",
+        path => path,
+    }
+    .to_owned();
+    url.set_path(&path);
+    Ok(url)
+}
+
+pub(super) fn rpc_url(endpoint: &str, method: &str) -> Result<Url> {
+    let mut url = endpoint_url(endpoint)?;
+    url.set_path(&format!("{}:{method}", url.path()));
+    Ok(url)
 }
 
 pub fn rkp_client() -> Result<Client> {
@@ -44,13 +60,13 @@ pub async fn fetch_challenge(
     fingerprint: &str,
     server_url: &str,
 ) -> Result<Vec<u8>> {
-    validate_endpoint(server_url)?;
+    let url = rpc_url(server_url, "fetchEekChain")?;
     let payload = encode(&Value::Map(vec![
         (text("fingerprint"), text(fingerprint)),
         (text("id"), int(42)),
     ]))?;
     let response = client
-        .post(format!("{server_url}:fetchEekChain"))
+        .post(url)
         .header("Content-Type", "application/cbor")
         .header("Accept", "application/cbor")
         .body(payload)

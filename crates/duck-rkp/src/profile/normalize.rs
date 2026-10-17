@@ -10,11 +10,17 @@ use super::model::{
     default_output_path,
 };
 
-pub(crate) fn normalize_profile(mut profile: ProfileData) -> Result<ProfileData> {
+pub(crate) fn normalize_profile(profile: ProfileData) -> Result<ProfileData> {
+    let mut profile = normalize_diagnostic_profile(profile)?;
+    profile.server_url = normalize_server_url(&profile.server_url)?;
+    Ok(profile)
+}
+
+pub(crate) fn normalize_diagnostic_profile(mut profile: ProfileData) -> Result<ProfileData> {
     profile.key_source = normalize_key_source(&profile.key_source)?;
     normalize_device_info(&mut profile.device);
     profile.fingerprint.value = profile.fingerprint.value.trim().to_owned();
-    profile.server_url = normalize_server_url(&profile.server_url)?;
+    profile.server_url = profile.server_url.trim().to_owned();
     profile.output_path = normalize_output_path(&profile.output_path)?;
     Ok(profile)
 }
